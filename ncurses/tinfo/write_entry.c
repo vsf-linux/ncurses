@@ -53,9 +53,15 @@
 
 MODULE_ID("$Id: write_entry.c,v 1.118 2021/08/15 20:07:11 tom Exp $")
 
+#ifdef __VSF__
+#	define total_written				(ncurses_tic_ctx->write_entry.__total_written)
+#	define total_parts					(ncurses_tic_ctx->write_entry.__total_parts)
+#	define total_size					(ncurses_tic_ctx->write_entry.__total_size)
+#else
 static int total_written;
 static int total_parts;
 static int total_size;
+#endif
 
 static int make_db_root(const char *);
 
@@ -113,7 +119,11 @@ static void
 check_writeable(int code)
 {
     static const char dirnames[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+#ifdef __VSF__
+#	define verified					(ncurses_tic_ctx->write_entry.check_writeable.__verified)
+#else
     static bool verified[sizeof(dirnames)];
+#endif
 
     char dir[sizeof(LEAF_FMT)];
     char *s = 0;
@@ -130,6 +140,9 @@ check_writeable(int code)
     }
 
     verified[s - dirnames] = TRUE;
+#ifdef __VSF__
+#	undef verified
+#endif
 }
 #endif /* !USE_HASHED_DB */
 
@@ -296,8 +309,13 @@ _nc_write_entry(TERMTYPE2 *const tp)
     unsigned limit2 = sizeof(filename) - (2 + LEAF_LEN);
     char saved = '\0';
 
+#ifdef __VSF__
+#	define call_count				(ncurses_tic_ctx->write_entry._nc_write_entry.__call_count)
+#	define start_time				(ncurses_tic_ctx->write_entry._nc_write_entry.__start_time)
+#else
     static int call_count;
     static time_t start_time;	/* time at start of writes */
+#endif
 
 #endif /* USE_HASHED_DB */
 
@@ -528,6 +546,10 @@ _nc_write_entry(TERMTYPE2 *const tp)
 	    write_file(linkname, tp);
 #endif /* HAVE_LINK */
     }
+#ifdef __VSF__
+#	undef call_count
+#	undef start_time
+#endif
 #endif /* USE_HASHED_DB */
 }
 

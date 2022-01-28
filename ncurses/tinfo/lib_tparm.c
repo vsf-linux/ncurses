@@ -115,7 +115,9 @@ MODULE_ID("$Id: lib_tparm.c,v 1.134 2021/08/21 21:52:08 tom Exp $")
  *	resulting in x mod y, not the reverse.
  */
 
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(int) _nc_tparm_err = 0;
+#endif
 
 #define TPS(var) tps->var
 #define popcount _nc_popcount	/* workaround for NetBSD 6.0 defect */

@@ -168,8 +168,10 @@ extern				NCURSES_EXPORT_VAR(unsigned) _nc_tracing;
 /* OLDNUM(n) indicates which line will be shifted to the position n.
    if OLDNUM(n) == _NEWINDEX, then the line n in new, not shifted from
    somewhere. */
+#ifndef __VSF__
 NCURSES_EXPORT_VAR (int *)
   _nc_oldnums = 0;		/* obsolete: keep for ABI compat */
+#endif
 
 # if USE_HASHMAP
 #  define oldnums(sp)   (sp)->_oldnum_list

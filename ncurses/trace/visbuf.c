@@ -124,7 +124,11 @@ _nc_visbuf2n(int bufnum, const char *buf, int len)
     vbuf = tp = _nc_trace_buf(bufnum, NormalLen(len));
 #else
     {
+#ifdef __VSF__
+#	define mybuf				(ncurses_ctx->visbuf._nc_visbuf2n.__mybuf)
+#else
 	static char *mybuf[NUM_VISBUFS];
+#endif
 	int c;
 
 	if (bufnum < 0) {
@@ -136,6 +140,9 @@ _nc_visbuf2n(int bufnum, const char *buf, int len)
 	    mybuf[bufnum] = typeRealloc(char, NormalLen(len), mybuf[bufnum]);
 	    vbuf = tp = mybuf[bufnum];
 	}
+#ifdef __VSF__
+#	undef mybuf
+#endif
     }
 #endif
     if (tp != 0) {

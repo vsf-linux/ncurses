@@ -60,8 +60,13 @@ trailing_spaces(const char *src)
 NCURSES_EXPORT(char *)
 _nc_tic_expand(const char *srcp, bool tic_format, int numbers)
 {
+#ifdef __VSF__
+#	define buffer		(ncurses_tic_ctx->comp_expand._nc_tic_expand.__buffer)
+#	define length		(ncurses_tic_ctx->comp_expand._nc_tic_expand.__length)
+#else
     static char *buffer;
     static size_t length;
+#endif
 
     int bufp;
     const char *str = VALID_STRING(srcp) ? srcp : "\0\0";
@@ -225,4 +230,8 @@ _nc_tic_expand(const char *srcp, bool tic_format, int numbers)
     }
     DEBUG_THIS(("... %s", _nc_visbuf(buffer)));
     return (buffer);
+#ifdef __VSF__
+#	undef buffer
+#	undef length
+#endif
 }

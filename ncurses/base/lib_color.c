@@ -87,8 +87,13 @@ NCURSES_PUBLIC_VAR(COLORS) (void)
     return SP ? SP->_color_count : -1;
 }
 #else
+#ifdef __VSF__
+#	define COLOR_PAIRS				(ncurses_ctx->lib_color.__COLOR_PAIRS)
+#	define COLORS					(ncurses_ctx->lib_color.__COLORS)
+#else
 NCURSES_EXPORT_VAR(int) COLOR_PAIRS = 0;
 NCURSES_EXPORT_VAR(int) COLORS = 0;
+#endif
 #endif
 #endif /* !USE_TERM_DRIVER */
 
@@ -560,7 +565,11 @@ _nc_reserve_pairs(SCREEN *sp, int want)
 NCURSES_EXPORT(int)
 _nc_init_pair(SCREEN *sp, int pair, int f, int b)
 {
+#ifdef __VSF__
+#	define null_pair	(ncurses_new_pair_ctx->lib_color._nc_init_pair.__null_pair)
+#else
     static colorpair_t null_pair;
+#endif
     colorpair_t result = null_pair;
     colorpair_t previous;
     int maxcolors;
@@ -683,6 +692,9 @@ _nc_init_pair(SCREEN *sp, int pair, int f, int b)
 #endif
 
     returnCode(OK);
+#ifdef __VSF__
+#	undef null_pair
+#endif
 }
 
 NCURSES_EXPORT(int)

@@ -74,7 +74,9 @@ NCURSES_PUBLIC_VAR(cur_term) (void)
 }
 
 #else
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(TERMINAL *) cur_term = 0;
+#endif
 #endif
 
 NCURSES_EXPORT(TERMINAL *)

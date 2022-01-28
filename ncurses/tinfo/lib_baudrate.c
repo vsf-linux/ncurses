@@ -200,8 +200,13 @@ _nc_baudrate(int OSpeed)
     return (OK);
 #else
 #if !USE_REENTRANT
+#ifdef __VSF__
+#	define last_OSpeed			(ncurses_ctx->lib_baudrate.__last_OSpeed)
+#	define last_baudrate		(ncurses_ctx->lib_baudrate.__last_baudrate)
+#else
     static int last_OSpeed;
     static int last_baudrate;
+#endif
 #endif
 
     int result = ERR;
@@ -234,6 +239,10 @@ _nc_baudrate(int OSpeed)
 	    last_OSpeed = OSpeed;
 	    last_baudrate = result;
 	}
+#ifdef __VSF__
+#	undef last_OSpeed
+#	undef last_baudrate
+#endif
 #endif
     }
     return (result);

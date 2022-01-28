@@ -53,10 +53,12 @@ NCURSES_PUBLIC_VAR(acs_map) (void)
 }
 #undef MyBuffer
 #else
+#ifndef __VSF__
 NCURSES_EXPORT_VAR (chtype) acs_map[ACS_LEN] =
 {
     0
 };
+#endif
 #endif
 
 #ifdef USE_TERM_DRIVER

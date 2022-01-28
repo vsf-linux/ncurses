@@ -124,6 +124,17 @@ extern NCURSES_EXPORT(void)     _nc_set_color_pair(SCREEN*, int, int);
 #define _nc_set_color_pair(sp, pair, mode) /* nothing */
 #endif
 
+#ifdef __VSF__
+struct ncurses_new_pair_ctx_t {
+	// lib_color.c
+	struct {
+		struct {
+			colorpair_t __null_pair;
+		} _nc_init_pair;
+	} lib_color;
+};
+#endif
+
 #else
 
 typedef struct _color_pairs colorpair_t;

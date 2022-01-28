@@ -1,0 +1,1066 @@
+ include/term_entry.h         |   5 ++
+ include/tic.h                | 115 ++++++++++++++++++++++++++++++++++++++
+ ncurses/base/lib_color.c     |  12 ++++
+ ncurses/base/lib_getch.c     |   2 +
+ ncurses/base/resizeterm.c    |   5 ++
+ ncurses/curses.priv.h        | 129 +++++++++++++++++++++++++++++++++++++++++++
+ ncurses/new_pair.h           |  11 ++++
+ ncurses/term.priv.h          |   8 +++
+ ncurses/tinfo/alloc_entry.c  |   5 ++
+ ncurses/tinfo/captoinfo.c    |  20 +++++++
+ ncurses/tinfo/comp_error.c   |   2 +
+ ncurses/tinfo/comp_expand.c  |   9 +++
+ ncurses/tinfo/comp_scan.c    |  32 +++++++++++
+ ncurses/tinfo/entries.c      |   2 +
+ ncurses/tinfo/lib_acs.c      |   2 +
+ ncurses/tinfo/lib_baudrate.c |   9 +++
+ ncurses/tinfo/lib_cur_term.c |   2 +
+ ncurses/tinfo/lib_data.c     |  10 +++-
+ ncurses/tinfo/lib_setup.c    |   2 +
+ ncurses/tinfo/lib_termcap.c  |   2 +
+ ncurses/tinfo/lib_tparm.c    |   2 +
+ ncurses/tinfo/lib_tputs.c    |   2 +
+ ncurses/tinfo/parse_entry.c  |   7 +++
+ ncurses/tinfo/write_entry.c  |  22 ++++++++
+ ncurses/trace/lib_trace.c    |   2 +
+ ncurses/trace/visbuf.c       |   7 +++
+ ncurses/tty/hardscroll.c     |   2 +
+ 27 files changed, 427 insertions(+), 1 deletion(-)
+
+diff --git a/include/term_entry.h b/include/term_entry.h
+index e2cf8380..924d84e1 100644
+--- a/include/term_entry.h
++++ b/include/term_entry.h
+@@ -132,8 +132,13 @@ struct entry {
+ 	ENTRY *last;
+ };
+ 
++#ifdef __VSF__
++#	define _nc_head		(ncurses_ctx->term_entry.___nc_head)
++#	define _nc_tail		(ncurses_ctx->term_entry.___nc_tail)
++#else
+ extern NCURSES_EXPORT_VAR(ENTRY *) _nc_head;
+ extern NCURSES_EXPORT_VAR(ENTRY *) _nc_tail;
++#endif
+ #define for_entry_list(qp)	for (qp = _nc_head; qp; qp = qp->next)
+ 
+ #define MAX_LINE	132
+diff --git a/include/tic.h b/include/tic.h
+index 36169f02..026f6b62 100644
+--- a/include/tic.h
++++ b/include/tic.h
+@@ -230,6 +230,90 @@ struct user_table_entry
+ 	HashValue ute_link;	/* index in table of next hash, or -1 */
+ };
+ 
++#ifdef __VSF__
++struct ncurses_tic_ctx_t {
++	struct name_table_entry *___nc_info_table;
++	struct name_table_entry *___nc_cap_table;
++	struct alias *___nc_capalias_table;
++	struct user_table_entry *___nc_user_table;
++	struct alias *___nc_infoalias_table;
++
++	struct {
++		NCURSES_EXPORT_VAR(bool) ___nc_suppress_warnings;
++		NCURSES_EXPORT_VAR(int) ___nc_curr_line;
++		NCURSES_EXPORT_VAR(int) ___nc_curr_col;
++	} comp_error;
++
++	struct {
++		NCURSES_EXPORT_VAR (int) ___nc_syntax;
++		NCURSES_EXPORT_VAR (int) ___nc_strict_bsd;		// = 1;
++		NCURSES_EXPORT_VAR (long) ___nc_curr_file_pos;
++		NCURSES_EXPORT_VAR (long) ___nc_comment_start;
++		NCURSES_EXPORT_VAR (long) ___nc_comment_end;
++		NCURSES_EXPORT_VAR (long) ___nc_start_line;
++
++		NCURSES_EXPORT_VAR (struct token) ___nc_curr_token;
++
++		bool __first_column;
++		bool __had_newline;
++		char __separator;
++		int __pushtype;
++		char *__pushname;
++
++#if NCURSES_EXT_FUNCS
++		NCURSES_EXPORT_VAR (bool) ___nc_disable_period;
++#endif
++
++		char *__bufptr;
++		char *__bufstart;
++		FILE *__yyin;
++
++		char *__tok_buf;
++
++		struct {
++			char *__result;
++			size_t __allocated;
++		} next_char;
++	} comp_scan;
++
++	struct {
++		struct {
++			char *__buffer;
++			size_t __length;
++		} _nc_tic_expand;
++	} comp_expand;
++
++	struct {
++		NCURSES_EXPORT_VAR(int) ___nc_tparm_err;
++	} lib_tpram;
++
++	struct {
++		NCURSES_EXPORT_VAR(unsigned) ___nc_tracing;
++	} lib_trace;
++
++	struct {
++		NCURSES_EXPORT_VAR(int) ___nc_nulls_sent;
++	} lib_tputs;
++
++	struct {
++		struct name_table_entry __temp;
++	} parse_entry;
++
++	struct {
++		int __total_written;
++		int __total_parts;
++		int __total_size;
++		struct {
++			bool __verified[26 + 26 + 10 + 1];
++		} check_writeable;
++		struct {
++			int __call_count;
++			time_t __start_time;
++		} _nc_write_entry;
++	} write_entry;
++};
++#endif
++
+ /*
+  * The casts are required for correct sign-propagation with systems such as
+  * AIX, IRIX64, Solaris which default to unsigned characters.  The C standard
+@@ -289,6 +373,16 @@ extern NCURSES_EXPORT(struct user_table_entry const *) _nc_find_user_entry
+ extern NCURSES_EXPORT(int)  _nc_get_token (bool);
+ extern NCURSES_EXPORT(void) _nc_panic_mode (char);
+ extern NCURSES_EXPORT(void) _nc_push_token (int);
++#ifdef __VSF__
++#	define _nc_curr_col		            (ncurses_tic_ctx->comp_error.___nc_curr_col)
++#	define _nc_curr_line		        (ncurses_tic_ctx->comp_error.___nc_curr_line)
++#	define _nc_syntax					(ncurses_tic_ctx->comp_scan.___nc_syntax)
++#	define _nc_strict_bsd				(ncurses_tic_ctx->comp_scan.___nc_strict_bsd)
++#	define _nc_comment_end				(ncurses_tic_ctx->comp_scan.___nc_comment_end)
++#	define _nc_comment_start			(ncurses_tic_ctx->comp_scan.___nc_comment_start)
++#	define _nc_curr_file_pos			(ncurses_tic_ctx->comp_scan.___nc_curr_file_pos)
++#	define _nc_start_line				(ncurses_tic_ctx->comp_scan.___nc_start_line)
++#else
+ extern NCURSES_EXPORT_VAR(int) _nc_curr_col;
+ extern NCURSES_EXPORT_VAR(int) _nc_curr_line;
+ extern NCURSES_EXPORT_VAR(int) _nc_syntax;
+@@ -297,6 +391,7 @@ extern NCURSES_EXPORT_VAR(long) _nc_comment_end;
+ extern NCURSES_EXPORT_VAR(long) _nc_comment_start;
+ extern NCURSES_EXPORT_VAR(long) _nc_curr_file_pos;
+ extern NCURSES_EXPORT_VAR(long) _nc_start_line;
++#endif
+ #define SYN_TERMINFO	0
+ #define SYN_TERMCAP	1
+ 
+@@ -308,10 +403,18 @@ extern NCURSES_EXPORT(void) _nc_set_source (const char *const);
+ extern NCURSES_EXPORT(void) _nc_set_type (const char *const);
+ extern GCC_NORETURN NCURSES_EXPORT(void) _nc_syserr_abort (const char *const,...) GCC_PRINTFLIKE(1,2);
+ extern NCURSES_EXPORT(void) _nc_warning (const char *const,...) GCC_PRINTFLIKE(1,2);
++#ifdef __VSF__
++#	define _nc_suppress_warnings		(ncurses_tic_ctx->comp_error.___nc_suppress_warnings)
++#else
+ extern NCURSES_EXPORT_VAR(bool) _nc_suppress_warnings;
++#endif
+ 
+ /* comp_scan.c */
++#ifdef __VSF__
++#	define _nc_curr_token				(ncurses_tic_ctx->comp_scan.___nc_curr_token)
++#else
+ extern NCURSES_EXPORT_VAR(struct token)	_nc_curr_token;
++#endif
+ 
+ /* comp_userdefs.c */
+ NCURSES_EXPORT(const struct user_table_entry *) _nc_get_userdefs_table (void);
+@@ -335,18 +438,30 @@ extern NCURSES_EXPORT_VAR(const struct tinfo_fkeys) _nc_tinfo_fkeys[];
+ /* lib_tparm.c */
+ #define NUM_PARM 9
+ 
++#ifdef __VSF__
++#	define _nc_tparm_err				(ncurses_tic_ctx->lib_tpram.___nc_tparm_err)
++#else
+ extern NCURSES_EXPORT_VAR(int) _nc_tparm_err;
++#endif
+ 
+ extern NCURSES_EXPORT(int) _nc_tparm_analyze(TERMINAL *, const char *, char **, int *);
+ extern NCURSES_EXPORT(void) _nc_reset_tparm(TERMINAL *);
+ 
+ /* lib_trace.c */
++#ifdef __VSF__
++#	define _nc_tracing					(ncurses_tic_ctx->lib_trace.___nc_tracing)
++#else
+ extern NCURSES_EXPORT_VAR(unsigned) _nc_tracing;
++#endif
+ extern NCURSES_EXPORT(const char *) _nc_visbuf (const char *);
+ extern NCURSES_EXPORT(const char *) _nc_visbuf2 (int, const char *);
+ 
+ /* lib_tputs.c */
++#ifdef __VSF__
++#	define _nc_nulls_sent				(ncurses_tic_ctx->lib_tputs.___nc_nulls_sent)
++#else
+ extern NCURSES_EXPORT_VAR(int) _nc_nulls_sent;	/* Add one for every null sent */
++#endif
+ 
+ /* comp_main.c: compiler main */
+ extern const char * _nc_progname;
+diff --git a/ncurses/base/lib_color.c b/ncurses/base/lib_color.c
+index e4dc79b5..b7e80d1c 100644
+--- a/ncurses/base/lib_color.c
++++ b/ncurses/base/lib_color.c
+@@ -87,9 +87,14 @@ NCURSES_PUBLIC_VAR(COLORS) (void)
+     return SP ? SP->_color_count : -1;
+ }
+ #else
++#ifdef __VSF__
++#	define COLOR_PAIRS				(ncurses_ctx->lib_color.__COLOR_PAIRS)
++#	define COLORS					(ncurses_ctx->lib_color.__COLORS)
++#else
+ NCURSES_EXPORT_VAR(int) COLOR_PAIRS = 0;
+ NCURSES_EXPORT_VAR(int) COLORS = 0;
+ #endif
++#endif
+ #endif /* !USE_TERM_DRIVER */
+ 
+ #define DATA(r,g,b) {r,g,b, 0,0,0, 0}
+@@ -560,7 +565,11 @@ _nc_reserve_pairs(SCREEN *sp, int want)
+ NCURSES_EXPORT(int)
+ _nc_init_pair(SCREEN *sp, int pair, int f, int b)
+ {
++#ifdef __VSF__
++#	define null_pair	(ncurses_new_pair_ctx->lib_color._nc_init_pair.__null_pair)
++#else
+     static colorpair_t null_pair;
++#endif
+     colorpair_t result = null_pair;
+     colorpair_t previous;
+     int maxcolors;
+@@ -683,6 +692,9 @@ _nc_init_pair(SCREEN *sp, int pair, int f, int b)
+ #endif
+ 
+     returnCode(OK);
++#ifdef __VSF__
++#	undef null_pair
++#endif
+ }
+ 
+ NCURSES_EXPORT(int)
+diff --git a/ncurses/base/lib_getch.c b/ncurses/base/lib_getch.c
+index bdb8a04f..ffc0a45d 100644
+--- a/ncurses/base/lib_getch.c
++++ b/ncurses/base/lib_getch.c
+@@ -63,8 +63,10 @@ _nc_ptr_Escdelay(SCREEN *sp)
+ }
+ #else
+ #define GetEscdelay(sp) ESCDELAY
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(int) ESCDELAY = 1000;
+ #endif
++#endif
+ 
+ #if NCURSES_EXT_FUNCS
+ NCURSES_EXPORT(int)
+diff --git a/ncurses/base/resizeterm.c b/ncurses/base/resizeterm.c
+index 225f5522..70d1bc94 100644
+--- a/ncurses/base/resizeterm.c
++++ b/ncurses/base/resizeterm.c
+@@ -55,8 +55,13 @@ MODULE_ID("$Id: resizeterm.c,v 1.51 2021/09/04 10:54:35 tom Exp $")
+ #define EXTRA_ARGS ,     CurLines,     CurCols
+ #define EXTRA_DCLS , int CurLines, int CurCols
+ #else
++#ifdef __VSF__
++#	define current_lines			(ncurses_ctx->resizeterm.__current_lines)
++#	define current_cols				(ncurses_ctx->resizeterm.__current_cols)
++#else
+ static int current_lines;
+ static int current_cols;
++#endif
+ #define CurLines current_lines
+ #define CurCols  current_cols
+ #define EXTRA_ARGS		/* nothing */
+diff --git a/ncurses/curses.priv.h b/ncurses/curses.priv.h
+index 872d25af..9bdea44f 100644
+--- a/ncurses/curses.priv.h
++++ b/ncurses/curses.priv.h
+@@ -866,7 +866,11 @@ struct DriverTCB; /* Terminal Control Block forward declaration */
+ #define INIT_TERM_DRIVER()	/* nothing */
+ #endif
+ 
++#ifdef __VSF__
++#	define _nc_globals				(ncurses_ctx->lib_data.___nc_globals)
++#else
+ extern NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals;
++#endif
+ 
+ /* The limit reserves one byte for a terminating NUL */
+ #define my_getstr_limit	(_nc_globals.getstr_limit - 1)
+@@ -888,7 +892,11 @@ extern NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals;
+ #define safe_ripoff_stack  _nc_prescreen.rippedoff
+ #endif
+ 
++#ifdef __VSF__
++#	define _nc_prescreen			(ncurses_ctx->lib_data.___nc_prescreen)
++#else
+ extern NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen;
++#endif
+ 
+ typedef enum {
+     ewInitial = 0,
+@@ -1186,8 +1194,13 @@ typedef struct screen {
+ #undef SCREEN
+ } SCREEN;
+ 
++#ifdef __VSF__
++#	define _nc_screen_chain				(ncurses_ctx->lib_data.___nc_screen_chain)
++#	define _nc_have_sigwinch			(ncurses_ctx->lib_data.___nc_have_sigwinch)
++#else
+ extern NCURSES_EXPORT_VAR(SCREEN *) _nc_screen_chain;
+ extern NCURSES_EXPORT_VAR(SIG_ATOMIC_T) _nc_have_sigwinch;
++#endif
+ 
+ 	WINDOWLIST {
+ 	WINDOWLIST *next;
+@@ -2178,7 +2191,11 @@ extern int vsscanf(const char *str, const char *format, va_list __arg);
+ #endif
+ 
+ /* scroll indices */
++#ifdef __VSF__
++#	define _nc_oldnums				£¨ncurses_ctx->hardscroll.___nc_oldnums)
++#else
+ extern NCURSES_EXPORT_VAR(int *) _nc_oldnums;
++#endif
+ 
+ #define USE_SETBUF_0 0
+ 
+@@ -2198,7 +2215,11 @@ extern NCURSES_EXPORT(void)     _nc_set_screen (SCREEN *);
+ #define CURRENT_SCREEN          _nc_screen()
+ #else
+ /* current screen is private data; avoid possible linking conflicts too */
++#ifdef __VSF__
++#define SP						(ncurses_ctx->lib_data.__SP)
++#else
+ extern NCURSES_EXPORT_VAR(SCREEN *) SP;
++#endif
+ #define CURRENT_SCREEN SP
+ #define _nc_alloc_screen()      ((SP = _nc_alloc_screen_sp()) != 0)
+ #define _nc_set_screen(sp)      SP = sp
+@@ -2545,10 +2566,118 @@ NCURSES_EXPORT(int) _nc_conv_to_utf8(unsigned char *, unsigned, unsigned);
+ NCURSES_EXPORT(int) _nc_conv_to_utf32(unsigned *, const char *, unsigned);
+ #endif
+ 
++#ifdef __VSF__
++struct ncurses_ctx_t {
++#if BROKEN_LINKER || USE_REENTRANT
++	// codes.c
++	struct {
++		NCURSES_CONST char ** __ptr_boolcodes;
++		NCURSES_CONST char ** __ptr_numcodes;
++		NCURSES_CONST char ** __ptr_strcodes;
++	} codes;
++#endif
++
++	// names.h
++	struct {
++		NCURSES_CONST char ** __ptr_boolfnames;
++		NCURSES_CONST char ** __ptr_boolnames;
++		NCURSES_CONST char ** __ptr_numfnames;
++		NCURSES_CONST char ** __ptr_numnames;
++		NCURSES_CONST char ** __ptr_strfnames;
++		NCURSES_CONST char ** __ptr_strnames;
++	} names;
++
++	// alloc_entry.c
++	struct {
++		char *__stringbuf;
++		size_t __next_free;
++	} alloc_entry;
++
++	// captioninfo.c
++	struct {
++#define MAX_PUSHED 16
++		int __stack[MAX_PUSHED];
++#undef MAX_PUSHED
++		int __stackptr;
++		int __onstack;
++		int __seenm;
++		int __seenn;
++		int __seenr;
++		int __param;
++		char *__dp;
++		char *__my_string;
++		size_t __my_length;
++		struct {
++			char __temp[2];
++		} save_char;
++	} captioninfo;
++
++	struct {
++		NCURSES_EXPORT_VAR (chtype) __acs_map[ACS_LEN];
++	} lib_acs;
++
++	struct {
++		int __current_lines;
++		int __current_cols;
++	} resizeterm;
++
++	struct {
++		NCURSES_EXPORT_VAR(int) __COLOR_PAIRS;
++		NCURSES_EXPORT_VAR(int) __COLORS;
++	} lib_color;
++
++	struct {
++		NCURSES_EXPORT_VAR(SCREEN *) ___nc_screen_chain;
++		NCURSES_EXPORT_VAR(SCREEN *) __SP;
++		NCURSES_EXPORT_VAR(NCURSES_GLOBALS) ___nc_globals;
++		NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) ___nc_prescreen;
++	} lib_data;
++
++	struct {
++		NCURSES_EXPORT_VAR(ENTRY *) ___nc_head;
++		NCURSES_EXPORT_VAR(ENTRY *) ___nc_tail;
++	} term_entry;
++
++	struct {
++		int __last_OSpeed;
++		int __last_baudrate;
++	} lib_baudrate;
++
++	struct {
++		NCURSES_EXPORT_VAR(TERMINAL *) __cur_term;
++	} lib_cur_term;
++
++	struct {
++		struct {
++			char *__mybuf[4];
++		} _nc_visbuf2n;
++	} visbuf;
++
++	struct {
++		NCURSES_EXPORT_VAR (int *)___nc_oldnums;
++	} hardscroll;
++
++	NCURSES_EXPORT_VAR(WINDOW *) __curscr;
++	NCURSES_EXPORT_VAR(WINDOW *) __newscr;
++	NCURSES_EXPORT_VAR(WINDOW *) __stdscr;
++	NCURSES_EXPORT_VAR(char) __ttytype[NAMESIZE];
++	NCURSES_EXPORT_VAR(int) __COLORS;
++	NCURSES_EXPORT_VAR(int) __COLOR_PAIRS;
++	NCURSES_EXPORT_VAR(int) __COLS;
++	NCURSES_EXPORT_VAR(int) __ESCDELAY;			// = 1000;
++	NCURSES_EXPORT_VAR(int) __LINES;
++	NCURSES_EXPORT_VAR(int) __TABSIZE;			// = 8;
++};
++#endif
++
+ #ifdef __cplusplus
+ }
+ #endif
+ 
++#ifdef __VSF__
++#	include "ncurses_port_vsf.h"
++#endif
++
+ /* *INDENT-ON* */
+ 
+ #endif /* CURSES_PRIV_H */
+diff --git a/ncurses/new_pair.h b/ncurses/new_pair.h
+index 49d7e8b8..6085b64d 100644
+--- a/ncurses/new_pair.h
++++ b/ncurses/new_pair.h
+@@ -124,6 +124,17 @@ extern NCURSES_EXPORT(void)     _nc_set_color_pair(SCREEN*, int, int);
+ #define _nc_set_color_pair(sp, pair, mode) /* nothing */
+ #endif
+ 
++#ifdef __VSF__
++struct ncurses_new_pair_ctx_t {
++	// lib_color.c
++	struct {
++		struct {
++			colorpair_t __null_pair;
++		} _nc_init_pair;
++	} lib_color;
++};
++#endif
++
+ #else
+ 
+ typedef struct _color_pairs colorpair_t;
+diff --git a/ncurses/term.priv.h b/ncurses/term.priv.h
+index ce7a986b..2436a7ff 100644
+--- a/ncurses/term.priv.h
++++ b/ncurses/term.priv.h
+@@ -269,7 +269,11 @@ typedef struct {
+ #endif
+ } NCURSES_GLOBALS;
+ 
++#ifdef __VSF__
++#	define _nc_globals				(ncurses_ctx->lib_data.___nc_globals)
++#else
+ extern NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals;
++#endif
+ 
+ #define N_RIPS 5
+ 
+@@ -321,7 +325,11 @@ typedef struct {
+ #endif
+ } NCURSES_PRESCREEN;
+ 
++#ifdef __VSF__
++#	define _nc_prescreen			(ncurses_ctx->lib_data.___nc_prescreen)
++#else
+ extern NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen;
++#endif
+ 
+ #ifdef __cplusplus
+ }
+diff --git a/ncurses/tinfo/alloc_entry.c b/ncurses/tinfo/alloc_entry.c
+index c13f86ee..60947dd2 100644
+--- a/ncurses/tinfo/alloc_entry.c
++++ b/ncurses/tinfo/alloc_entry.c
+@@ -55,8 +55,13 @@ MODULE_ID("$Id: alloc_entry.c,v 1.66 2021/08/08 00:09:37 tom Exp $")
+ 
+ #define MAX_STRTAB	4096	/* documented maximum entry size */
+ 
++#ifdef __VSF__
++#	define stringbuf		(ncurses_ctx->alloc_entry.__stringbuf)
++#	define next_free		(ncurses_ctx->alloc_entry.__next_free)
++#else
+ static char *stringbuf;		/* buffer for string capabilities */
+ static size_t next_free;	/* next free character in stringbuf */
++#endif
+ 
+ NCURSES_EXPORT(void)
+ _nc_init_entry(ENTRY * const tp)
+diff --git a/ncurses/tinfo/captoinfo.c b/ncurses/tinfo/captoinfo.c
+index 7e14731d..9eeae3a0 100644
+--- a/ncurses/tinfo/captoinfo.c
++++ b/ncurses/tinfo/captoinfo.c
+@@ -108,6 +108,18 @@ MODULE_ID("$Id: captoinfo.c,v 1.102 2021/09/04 10:29:15 tom Exp $")
+ 
+ #define MAX_PUSHED	16	/* max # args we can push onto the stack */
+ 
++#ifdef __VSF__
++#	define stack		(ncurses_ctx->captioninfo.__stack)
++#	define stackptr		(ncurses_ctx->captioninfo.__stackptr)
++#	define onstack		(ncurses_ctx->captioninfo.__onstack)
++#	define seenm		(ncurses_ctx->captioninfo.__seenm)
++#	define seenn		(ncurses_ctx->captioninfo.__seenn)
++#	define seenr		(ncurses_ctx->captioninfo.__seenr)
++#	define param		(ncurses_ctx->captioninfo.__param)
++#	define dp			(ncurses_ctx->captioninfo.__dp)
++#	define my_string	(ncurses_ctx->captioninfo.__my_string)
++#	define my_length	(ncurses_ctx->captioninfo.__my_length)
++#else
+ static int stack[MAX_PUSHED];	/* the stack */
+ static int stackptr;		/* the next empty place on the stack */
+ static int onstack;		/* the top of stack */
+@@ -119,6 +131,7 @@ static char *dp;		/* pointer to end of the converted string */
+ 
+ static char *my_string;
+ static size_t my_length;
++#endif
+ 
+ static char *
+ init_string(void)
+@@ -149,9 +162,16 @@ save_string(char *d, const char *const s)
+ static NCURSES_INLINE char *
+ save_char(char *s, int c)
+ {
++#ifdef __VSF__
++#	define temp			(ncurses_ctx->captioninfo.save_char.__temp)
++#else
+     static char temp[2];
++#endif
+     temp[0] = (char) c;
+     return save_string(s, temp);
++#ifdef __VSF__
++#	undef temp
++#endif
+ }
+ 
+ static void
+diff --git a/ncurses/tinfo/comp_error.c b/ncurses/tinfo/comp_error.c
+index 48f48784..d95d8155 100644
+--- a/ncurses/tinfo/comp_error.c
++++ b/ncurses/tinfo/comp_error.c
+@@ -44,9 +44,11 @@
+ 
+ MODULE_ID("$Id: comp_error.c,v 1.40 2020/02/02 23:34:34 tom Exp $")
+ 
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(bool) _nc_suppress_warnings = FALSE;
+ NCURSES_EXPORT_VAR(int) _nc_curr_line = 0; /* current line # in input */
+ NCURSES_EXPORT_VAR(int) _nc_curr_col = 0; /* current column # in input */
++#endif
+ 
+ #define SourceName	_nc_globals.comp_sourcename
+ #define TermType	_nc_globals.comp_termtype
+diff --git a/ncurses/tinfo/comp_expand.c b/ncurses/tinfo/comp_expand.c
+index 724283ce..63fe52d3 100644
+--- a/ncurses/tinfo/comp_expand.c
++++ b/ncurses/tinfo/comp_expand.c
+@@ -60,8 +60,13 @@ trailing_spaces(const char *src)
+ NCURSES_EXPORT(char *)
+ _nc_tic_expand(const char *srcp, bool tic_format, int numbers)
+ {
++#ifdef __VSF__
++#	define buffer		(ncurses_tic_ctx->comp_expand._nc_tic_expand.__buffer)
++#	define length		(ncurses_tic_ctx->comp_expand._nc_tic_expand.__length)
++#else
+     static char *buffer;
+     static size_t length;
++#endif
+ 
+     int bufp;
+     const char *str = VALID_STRING(srcp) ? srcp : "\0\0";
+@@ -225,4 +230,8 @@ _nc_tic_expand(const char *srcp, bool tic_format, int numbers)
+     }
+     DEBUG_THIS(("... %s", _nc_visbuf(buffer)));
+     return (buffer);
++#ifdef __VSF__
++#	undef buffer
++#	undef length
++#endif
+ }
+diff --git a/ncurses/tinfo/comp_scan.c b/ncurses/tinfo/comp_scan.c
+index 08e0e7e6..6341da6f 100644
+--- a/ncurses/tinfo/comp_scan.c
++++ b/ncurses/tinfo/comp_scan.c
+@@ -61,6 +61,7 @@ MODULE_ID("$Id: comp_scan.c,v 1.112 2021/10/04 23:56:28 tom Exp $")
+ 
+ #define iswhite(ch)	(ch == ' '  ||  ch == '\t')
+ 
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR (int) _nc_syntax = 0;         /* termcap or terminfo? */
+ NCURSES_EXPORT_VAR (int) _nc_strict_bsd = 1;  /* ncurses extended termcap? */
+ NCURSES_EXPORT_VAR (long) _nc_curr_file_pos = 0; /* file offset of current line */
+@@ -72,6 +73,7 @@ NCURSES_EXPORT_VAR (struct token) _nc_curr_token =
+ {
+     0, 0, 0
+ };
++#endif
+ 
+ /*****************************************************************************
+  *
+@@ -79,6 +81,16 @@ NCURSES_EXPORT_VAR (struct token) _nc_curr_token =
+  *
+  *****************************************************************************/
+ 
++#ifdef __VSF__
++#	define first_column				(ncurses_tic_ctx->comp_scan.__first_column)
++#	define had_newline				(ncurses_tic_ctx->comp_scan.__had_newline)
++#	define separator				(ncurses_tic_ctx->comp_scan.__separator)
++#	define pushtype					(ncurses_tic_ctx->comp_scan.__pushtype)
++#	define pushname					(ncurses_tic_ctx->comp_scan.__pushname)
++#if NCURSES_EXT_FUNCS
++#	define _nc_disable_period		(ncurses_tic_ctx->comp_scan.___nc_disable_period)
++#endif
++#else
+ static bool first_column;	/* See 'next_char()' below */
+ static bool had_newline;
+ static char separator;		/* capability separator */
+@@ -88,6 +100,7 @@ static char *pushname;
+ #if NCURSES_EXT_FUNCS
+ NCURSES_EXPORT_VAR (bool) _nc_disable_period = FALSE; /* used by tic -a option */
+ #endif
++#endif
+ 
+ /*****************************************************************************
+  *
+@@ -97,9 +110,15 @@ NCURSES_EXPORT_VAR (bool) _nc_disable_period = FALSE; /* used by tic -a option *
+ 
+ #define LEXBUFSIZ	1024
+ 
++#ifdef __VSF__
++#	define bufptr					(ncurses_tic_ctx->comp_scan.__bufptr)
++#	define bufstart					(ncurses_tic_ctx->comp_scan.__bufstart)
++#	define yyin						(ncurses_tic_ctx->comp_scan.__yyin)
++#else
+ static char *bufptr;		/* otherwise, the input buffer pointer */
+ static char *bufstart;		/* start of buffer so we can compute offsets */
+ static FILE *yyin;		/* scanner's input file descriptor */
++#endif
+ 
+ /*
+  *	_nc_reset_input()
+@@ -161,8 +180,13 @@ last_char(int from_end)
+ static int
+ next_char(void)
+ {
++#ifdef __VSF__
++#	define result					(ncurses_tic_ctx->comp_scan.next_char.__result)
++#	define allocated				(ncurses_tic_ctx->comp_scan.next_char.__allocated)
++#else
+     static char *result;
+     static size_t allocated;
++#endif
+     int the_char;
+ 
+     if (!yyin) {
+@@ -264,6 +288,10 @@ next_char(void)
+     _nc_curr_col++;
+     the_char = *bufptr++;
+     return UChar(the_char);
++#ifdef __VSF__
++#	undef result
++#	undef allocated
++#endif
+ }
+ 
+ static void
+@@ -310,7 +338,11 @@ eat_escaped_newline(int ch)
+ 	*tok_ptr++ = (char) ch; \
+ 	*tok_ptr = '\0'
+ 
++#ifdef __VSF__
++#	define tok_buf					(ncurses_tic_ctx->comp_scan.__tok_buf)
++#else
+ static char *tok_buf;
++#endif
+ 
+ /*
+  *	int
+diff --git a/ncurses/tinfo/entries.c b/ncurses/tinfo/entries.c
+index 1c55bfec..f63de516 100644
+--- a/ncurses/tinfo/entries.c
++++ b/ncurses/tinfo/entries.c
+@@ -61,8 +61,10 @@ MODULE_ID("$Id: entries.c,v 1.30 2020/02/02 23:34:34 tom Exp $")
+  *	   _nc_head                _nc_tail
+  */
+ 
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(ENTRY *) _nc_head = 0;
+ NCURSES_EXPORT_VAR(ENTRY *) _nc_tail = 0;
++#endif
+ 
+ static ENTRY *
+ _nc_delink_entry(ENTRY * headp, TERMTYPE2 *tterm)
+diff --git a/ncurses/tinfo/lib_acs.c b/ncurses/tinfo/lib_acs.c
+index 4ede53f6..a0578491 100644
+--- a/ncurses/tinfo/lib_acs.c
++++ b/ncurses/tinfo/lib_acs.c
+@@ -53,11 +53,13 @@ NCURSES_PUBLIC_VAR(acs_map) (void)
+ }
+ #undef MyBuffer
+ #else
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR (chtype) acs_map[ACS_LEN] =
+ {
+     0
+ };
+ #endif
++#endif
+ 
+ #ifdef USE_TERM_DRIVER
+ NCURSES_EXPORT(chtype)
+diff --git a/ncurses/tinfo/lib_baudrate.c b/ncurses/tinfo/lib_baudrate.c
+index 311c41ac..ab6ee504 100644
+--- a/ncurses/tinfo/lib_baudrate.c
++++ b/ncurses/tinfo/lib_baudrate.c
+@@ -200,8 +200,13 @@ _nc_baudrate(int OSpeed)
+     return (OK);
+ #else
+ #if !USE_REENTRANT
++#ifdef __VSF__
++#	define last_OSpeed			(ncurses_ctx->lib_baudrate.__last_OSpeed)
++#	define last_baudrate		(ncurses_ctx->lib_baudrate.__last_baudrate)
++#else
+     static int last_OSpeed;
+     static int last_baudrate;
++#endif
+ #endif
+ 
+     int result = ERR;
+@@ -234,6 +239,10 @@ _nc_baudrate(int OSpeed)
+ 	    last_OSpeed = OSpeed;
+ 	    last_baudrate = result;
+ 	}
++#ifdef __VSF__
++#	undef last_OSpeed
++#	undef last_baudrate
++#endif
+ #endif
+     }
+     return (result);
+diff --git a/ncurses/tinfo/lib_cur_term.c b/ncurses/tinfo/lib_cur_term.c
+index 0373aebb..10280a39 100644
+--- a/ncurses/tinfo/lib_cur_term.c
++++ b/ncurses/tinfo/lib_cur_term.c
+@@ -74,8 +74,10 @@ NCURSES_PUBLIC_VAR(cur_term) (void)
+ }
+ 
+ #else
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(TERMINAL *) cur_term = 0;
+ #endif
++#endif
+ 
+ NCURSES_EXPORT(TERMINAL *)
+ NCURSES_SP_NAME(set_curterm) (NCURSES_SP_DCLx TERMINAL *termp)
+diff --git a/ncurses/tinfo/lib_data.c b/ncurses/tinfo/lib_data.c
+index 8bebc3d7..6284bdcb 100644
+--- a/ncurses/tinfo/lib_data.c
++++ b/ncurses/tinfo/lib_data.c
+@@ -66,12 +66,16 @@ NCURSES_PUBLIC_VAR(newscr) (void)
+     return CURRENT_SCREEN ? NewScreen(CURRENT_SCREEN) : 0;
+ }
+ #else
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(WINDOW *) stdscr = 0;
+ NCURSES_EXPORT_VAR(WINDOW *) curscr = 0;
+ NCURSES_EXPORT_VAR(WINDOW *) newscr = 0;
+ #endif
++#endif
+ 
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(SCREEN *) _nc_screen_chain = 0;
++#endif
+ 
+ /*
+  * The variable 'SP' will be defined as a function on systems that cannot link
+@@ -107,10 +111,13 @@ _nc_set_screen(SCREEN *sp)
+ }
+ 
+ #else
+-
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(SCREEN *) SP = NULL; /* Some linkers require initialized data... */
+ #endif
++#endif
+ /* *INDENT-OFF* */
++
++#ifndef __VSF__
+ #define CHARS_0s { '\0' }
+ 
+ #define TGETENT_0 { 0L, FALSE, NULL, NULL, NULL }
+@@ -281,6 +288,7 @@ NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen = {
+ #endif
+ #endif
+ };
++#endif
+ /* *INDENT-ON* */
+ 
+ /*
+diff --git a/ncurses/tinfo/lib_setup.c b/ncurses/tinfo/lib_setup.c
+index 0aaaa930..4de40164 100644
+--- a/ncurses/tinfo/lib_setup.c
++++ b/ncurses/tinfo/lib_setup.c
+@@ -163,11 +163,13 @@ NCURSES_PUBLIC_VAR(TABSIZE) (void)
+     return *_nc_ptr_Tabsize(CURRENT_SCREEN);
+ }
+ #else
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(char) ttytype[NAMESIZE] = "";
+ NCURSES_EXPORT_VAR(int) LINES = 0;
+ NCURSES_EXPORT_VAR(int) COLS = 0;
+ NCURSES_EXPORT_VAR(int) TABSIZE = 8;
+ #endif
++#endif
+ 
+ #if NCURSES_EXT_FUNCS
+ NCURSES_EXPORT(int)
+diff --git a/ncurses/tinfo/lib_termcap.c b/ncurses/tinfo/lib_termcap.c
+index 5ce43a3c..13ebce8e 100644
+--- a/ncurses/tinfo/lib_termcap.c
++++ b/ncurses/tinfo/lib_termcap.c
+@@ -51,8 +51,10 @@
+ 
+ MODULE_ID("$Id: lib_termcap.c,v 1.88 2020/02/02 23:34:34 tom Exp $")
+ 
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(char *) UP = 0;
+ NCURSES_EXPORT_VAR(char *) BC = 0;
++#endif
+ 
+ #define MyCache  _nc_globals.tgetent_cache
+ #define CacheInx _nc_globals.tgetent_index
+diff --git a/ncurses/tinfo/lib_tparm.c b/ncurses/tinfo/lib_tparm.c
+index 72d88138..cd163e30 100644
+--- a/ncurses/tinfo/lib_tparm.c
++++ b/ncurses/tinfo/lib_tparm.c
+@@ -115,7 +115,9 @@ MODULE_ID("$Id: lib_tparm.c,v 1.134 2021/08/21 21:52:08 tom Exp $")
+  *	resulting in x mod y, not the reverse.
+  */
+ 
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(int) _nc_tparm_err = 0;
++#endif
+ 
+ #define TPS(var) tps->var
+ #define popcount _nc_popcount	/* workaround for NetBSD 6.0 defect */
+diff --git a/ncurses/tinfo/lib_tputs.c b/ncurses/tinfo/lib_tputs.c
+index b9ca41cc..1f1b9405 100644
+--- a/ncurses/tinfo/lib_tputs.c
++++ b/ncurses/tinfo/lib_tputs.c
+@@ -54,10 +54,12 @@
+ 
+ MODULE_ID("$Id: lib_tputs.c,v 1.108 2021/05/08 23:27:40 tom Exp $")
+ 
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(char) PC = 0;              /* used by termcap library */
+ NCURSES_EXPORT_VAR(NCURSES_OSPEED) ospeed = 0;        /* used by termcap library */
+ 
+ NCURSES_EXPORT_VAR(int) _nc_nulls_sent = 0;   /* used by 'tack' program */
++#endif
+ 
+ #if NCURSES_NO_PADDING
+ NCURSES_EXPORT(void)
+diff --git a/ncurses/tinfo/parse_entry.c b/ncurses/tinfo/parse_entry.c
+index a77cd0b2..67d40287 100644
+--- a/ncurses/tinfo/parse_entry.c
++++ b/ncurses/tinfo/parse_entry.c
+@@ -66,7 +66,11 @@ static struct name_table_entry const *lookup_fullname(const char *name);
+ static struct name_table_entry const *
+ _nc_extend_names(ENTRY * entryp, const char *name, int token_type)
+ {
++#ifdef __VSF__
++#	define temp					(ncurses_tic_ctx->parse_entry.__temp)
++#else
+     static struct name_table_entry temp;
++#endif
+     TERMTYPE2 *tp = &(entryp->tterm);
+     unsigned offset = 0;
+     unsigned actual;
+@@ -178,6 +182,9 @@ _nc_extend_names(ENTRY * entryp, const char *name, int token_type)
+     temp.nte_link = -1;
+ 
+     return &temp;
++#ifdef __VSF__
++#	undef temp
++#endif
+ }
+ 
+ static const char *
+diff --git a/ncurses/tinfo/write_entry.c b/ncurses/tinfo/write_entry.c
+index cab47570..a3b515e8 100644
+--- a/ncurses/tinfo/write_entry.c
++++ b/ncurses/tinfo/write_entry.c
+@@ -53,9 +53,15 @@
+ 
+ MODULE_ID("$Id: write_entry.c,v 1.118 2021/08/15 20:07:11 tom Exp $")
+ 
++#ifdef __VSF__
++#	define total_written				(ncurses_tic_ctx->write_entry.__total_written)
++#	define total_parts					(ncurses_tic_ctx->write_entry.__total_parts)
++#	define total_size					(ncurses_tic_ctx->write_entry.__total_size)
++#else
+ static int total_written;
+ static int total_parts;
+ static int total_size;
++#endif
+ 
+ static int make_db_root(const char *);
+ 
+@@ -113,7 +119,11 @@ static void
+ check_writeable(int code)
+ {
+     static const char dirnames[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
++#ifdef __VSF__
++#	define verified					(ncurses_tic_ctx->write_entry.check_writeable.__verified)
++#else
+     static bool verified[sizeof(dirnames)];
++#endif
+ 
+     char dir[sizeof(LEAF_FMT)];
+     char *s = 0;
+@@ -130,6 +140,9 @@ check_writeable(int code)
+     }
+ 
+     verified[s - dirnames] = TRUE;
++#ifdef __VSF__
++#	undef verified
++#endif
+ }
+ #endif /* !USE_HASHED_DB */
+ 
+@@ -296,8 +309,13 @@ _nc_write_entry(TERMTYPE2 *const tp)
+     unsigned limit2 = sizeof(filename) - (2 + LEAF_LEN);
+     char saved = '\0';
+ 
++#ifdef __VSF__
++#	define call_count				(ncurses_tic_ctx->write_entry._nc_write_entry.__call_count)
++#	define start_time				(ncurses_tic_ctx->write_entry._nc_write_entry.__start_time)
++#else
+     static int call_count;
+     static time_t start_time;	/* time at start of writes */
++#endif
+ 
+ #endif /* USE_HASHED_DB */
+ 
+@@ -528,6 +546,10 @@ _nc_write_entry(TERMTYPE2 *const tp)
+ 	    write_file(linkname, tp);
+ #endif /* HAVE_LINK */
+     }
++#ifdef __VSF__
++#	undef call_count
++#	undef start_time
++#endif
+ #endif /* USE_HASHED_DB */
+ }
+ 
+diff --git a/ncurses/trace/lib_trace.c b/ncurses/trace/lib_trace.c
+index 9acbd471..5513374f 100644
+--- a/ncurses/trace/lib_trace.c
++++ b/ncurses/trace/lib_trace.c
+@@ -50,7 +50,9 @@
+ 
+ MODULE_ID("$Id: lib_trace.c,v 1.99 2021/06/26 20:44:59 tom Exp $")
+ 
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR(unsigned) _nc_tracing = 0; /* always define this */
++#endif
+ 
+ #ifdef TRACE
+ 
+diff --git a/ncurses/trace/visbuf.c b/ncurses/trace/visbuf.c
+index aca8affc..1e58d2f4 100644
+--- a/ncurses/trace/visbuf.c
++++ b/ncurses/trace/visbuf.c
+@@ -124,7 +124,11 @@ _nc_visbuf2n(int bufnum, const char *buf, int len)
+     vbuf = tp = _nc_trace_buf(bufnum, NormalLen(len));
+ #else
+     {
++#ifdef __VSF__
++#	define mybuf				(ncurses_ctx->visbuf._nc_visbuf2n.__mybuf)
++#else
+ 	static char *mybuf[NUM_VISBUFS];
++#endif
+ 	int c;
+ 
+ 	if (bufnum < 0) {
+@@ -136,6 +140,9 @@ _nc_visbuf2n(int bufnum, const char *buf, int len)
+ 	    mybuf[bufnum] = typeRealloc(char, NormalLen(len), mybuf[bufnum]);
+ 	    vbuf = tp = mybuf[bufnum];
+ 	}
++#ifdef __VSF__
++#	undef mybuf
++#endif
+     }
+ #endif
+     if (tp != 0) {
+diff --git a/ncurses/tty/hardscroll.c b/ncurses/tty/hardscroll.c
+index abb21cfd..510d6901 100644
+--- a/ncurses/tty/hardscroll.c
++++ b/ncurses/tty/hardscroll.c
+@@ -168,8 +168,10 @@ extern				NCURSES_EXPORT_VAR(unsigned) _nc_tracing;
+ /* OLDNUM(n) indicates which line will be shifted to the position n.
+    if OLDNUM(n) == _NEWINDEX, then the line n in new, not shifted from
+    somewhere. */
++#ifndef __VSF__
+ NCURSES_EXPORT_VAR (int *)
+   _nc_oldnums = 0;		/* obsolete: keep for ABI compat */
++#endif
+ 
+ # if USE_HASHMAP
+ #  define oldnums(sp)   (sp)->_oldnum_list

@@ -55,8 +55,13 @@ MODULE_ID("$Id: alloc_entry.c,v 1.66 2021/08/08 00:09:37 tom Exp $")
 
 #define MAX_STRTAB	4096	/* documented maximum entry size */
 
+#ifdef __VSF__
+#	define stringbuf		(ncurses_ctx->alloc_entry.__stringbuf)
+#	define next_free		(ncurses_ctx->alloc_entry.__next_free)
+#else
 static char *stringbuf;		/* buffer for string capabilities */
 static size_t next_free;	/* next free character in stringbuf */
+#endif
 
 NCURSES_EXPORT(void)
 _nc_init_entry(ENTRY * const tp)

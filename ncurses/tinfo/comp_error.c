@@ -44,9 +44,11 @@
 
 MODULE_ID("$Id: comp_error.c,v 1.40 2020/02/02 23:34:34 tom Exp $")
 
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(bool) _nc_suppress_warnings = FALSE;
 NCURSES_EXPORT_VAR(int) _nc_curr_line = 0; /* current line # in input */
 NCURSES_EXPORT_VAR(int) _nc_curr_col = 0; /* current column # in input */
+#endif
 
 #define SourceName	_nc_globals.comp_sourcename
 #define TermType	_nc_globals.comp_termtype

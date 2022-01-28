@@ -230,6 +230,90 @@ struct user_table_entry
 	HashValue ute_link;	/* index in table of next hash, or -1 */
 };
 
+#ifdef __VSF__
+struct ncurses_tic_ctx_t {
+	struct name_table_entry *___nc_info_table;
+	struct name_table_entry *___nc_cap_table;
+	struct alias *___nc_capalias_table;
+	struct user_table_entry *___nc_user_table;
+	struct alias *___nc_infoalias_table;
+
+	struct {
+		NCURSES_EXPORT_VAR(bool) ___nc_suppress_warnings;
+		NCURSES_EXPORT_VAR(int) ___nc_curr_line;
+		NCURSES_EXPORT_VAR(int) ___nc_curr_col;
+	} comp_error;
+
+	struct {
+		NCURSES_EXPORT_VAR (int) ___nc_syntax;
+		NCURSES_EXPORT_VAR (int) ___nc_strict_bsd;		// = 1;
+		NCURSES_EXPORT_VAR (long) ___nc_curr_file_pos;
+		NCURSES_EXPORT_VAR (long) ___nc_comment_start;
+		NCURSES_EXPORT_VAR (long) ___nc_comment_end;
+		NCURSES_EXPORT_VAR (long) ___nc_start_line;
+
+		NCURSES_EXPORT_VAR (struct token) ___nc_curr_token;
+
+		bool __first_column;
+		bool __had_newline;
+		char __separator;
+		int __pushtype;
+		char *__pushname;
+
+#if NCURSES_EXT_FUNCS
+		NCURSES_EXPORT_VAR (bool) ___nc_disable_period;
+#endif
+
+		char *__bufptr;
+		char *__bufstart;
+		FILE *__yyin;
+
+		char *__tok_buf;
+
+		struct {
+			char *__result;
+			size_t __allocated;
+		} next_char;
+	} comp_scan;
+
+	struct {
+		struct {
+			char *__buffer;
+			size_t __length;
+		} _nc_tic_expand;
+	} comp_expand;
+
+	struct {
+		NCURSES_EXPORT_VAR(int) ___nc_tparm_err;
+	} lib_tpram;
+
+	struct {
+		NCURSES_EXPORT_VAR(unsigned) ___nc_tracing;
+	} lib_trace;
+
+	struct {
+		NCURSES_EXPORT_VAR(int) ___nc_nulls_sent;
+	} lib_tputs;
+
+	struct {
+		struct name_table_entry __temp;
+	} parse_entry;
+
+	struct {
+		int __total_written;
+		int __total_parts;
+		int __total_size;
+		struct {
+			bool __verified[26 + 26 + 10 + 1];
+		} check_writeable;
+		struct {
+			int __call_count;
+			time_t __start_time;
+		} _nc_write_entry;
+	} write_entry;
+};
+#endif
+
 /*
  * The casts are required for correct sign-propagation with systems such as
  * AIX, IRIX64, Solaris which default to unsigned characters.  The C standard
@@ -289,6 +373,16 @@ extern NCURSES_EXPORT(struct user_table_entry const *) _nc_find_user_entry
 extern NCURSES_EXPORT(int)  _nc_get_token (bool);
 extern NCURSES_EXPORT(void) _nc_panic_mode (char);
 extern NCURSES_EXPORT(void) _nc_push_token (int);
+#ifdef __VSF__
+#	define _nc_curr_col		            (ncurses_tic_ctx->comp_error.___nc_curr_col)
+#	define _nc_curr_line		        (ncurses_tic_ctx->comp_error.___nc_curr_line)
+#	define _nc_syntax					(ncurses_tic_ctx->comp_scan.___nc_syntax)
+#	define _nc_strict_bsd				(ncurses_tic_ctx->comp_scan.___nc_strict_bsd)
+#	define _nc_comment_end				(ncurses_tic_ctx->comp_scan.___nc_comment_end)
+#	define _nc_comment_start			(ncurses_tic_ctx->comp_scan.___nc_comment_start)
+#	define _nc_curr_file_pos			(ncurses_tic_ctx->comp_scan.___nc_curr_file_pos)
+#	define _nc_start_line				(ncurses_tic_ctx->comp_scan.___nc_start_line)
+#else
 extern NCURSES_EXPORT_VAR(int) _nc_curr_col;
 extern NCURSES_EXPORT_VAR(int) _nc_curr_line;
 extern NCURSES_EXPORT_VAR(int) _nc_syntax;
@@ -297,6 +391,7 @@ extern NCURSES_EXPORT_VAR(long) _nc_comment_end;
 extern NCURSES_EXPORT_VAR(long) _nc_comment_start;
 extern NCURSES_EXPORT_VAR(long) _nc_curr_file_pos;
 extern NCURSES_EXPORT_VAR(long) _nc_start_line;
+#endif
 #define SYN_TERMINFO	0
 #define SYN_TERMCAP	1
 
@@ -308,10 +403,18 @@ extern NCURSES_EXPORT(void) _nc_set_source (const char *const);
 extern NCURSES_EXPORT(void) _nc_set_type (const char *const);
 extern GCC_NORETURN NCURSES_EXPORT(void) _nc_syserr_abort (const char *const,...) GCC_PRINTFLIKE(1,2);
 extern NCURSES_EXPORT(void) _nc_warning (const char *const,...) GCC_PRINTFLIKE(1,2);
+#ifdef __VSF__
+#	define _nc_suppress_warnings		(ncurses_tic_ctx->comp_error.___nc_suppress_warnings)
+#else
 extern NCURSES_EXPORT_VAR(bool) _nc_suppress_warnings;
+#endif
 
 /* comp_scan.c */
+#ifdef __VSF__
+#	define _nc_curr_token				(ncurses_tic_ctx->comp_scan.___nc_curr_token)
+#else
 extern NCURSES_EXPORT_VAR(struct token)	_nc_curr_token;
+#endif
 
 /* comp_userdefs.c */
 NCURSES_EXPORT(const struct user_table_entry *) _nc_get_userdefs_table (void);
@@ -335,18 +438,30 @@ extern NCURSES_EXPORT_VAR(const struct tinfo_fkeys) _nc_tinfo_fkeys[];
 /* lib_tparm.c */
 #define NUM_PARM 9
 
+#ifdef __VSF__
+#	define _nc_tparm_err				(ncurses_tic_ctx->lib_tpram.___nc_tparm_err)
+#else
 extern NCURSES_EXPORT_VAR(int) _nc_tparm_err;
+#endif
 
 extern NCURSES_EXPORT(int) _nc_tparm_analyze(TERMINAL *, const char *, char **, int *);
 extern NCURSES_EXPORT(void) _nc_reset_tparm(TERMINAL *);
 
 /* lib_trace.c */
+#ifdef __VSF__
+#	define _nc_tracing					(ncurses_tic_ctx->lib_trace.___nc_tracing)
+#else
 extern NCURSES_EXPORT_VAR(unsigned) _nc_tracing;
+#endif
 extern NCURSES_EXPORT(const char *) _nc_visbuf (const char *);
 extern NCURSES_EXPORT(const char *) _nc_visbuf2 (int, const char *);
 
 /* lib_tputs.c */
+#ifdef __VSF__
+#	define _nc_nulls_sent				(ncurses_tic_ctx->lib_tputs.___nc_nulls_sent)
+#else
 extern NCURSES_EXPORT_VAR(int) _nc_nulls_sent;	/* Add one for every null sent */
+#endif
 
 /* comp_main.c: compiler main */
 extern const char * _nc_progname;

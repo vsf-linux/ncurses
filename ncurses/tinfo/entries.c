@@ -61,8 +61,10 @@ MODULE_ID("$Id: entries.c,v 1.30 2020/02/02 23:34:34 tom Exp $")
  *	   _nc_head                _nc_tail
  */
 
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(ENTRY *) _nc_head = 0;
 NCURSES_EXPORT_VAR(ENTRY *) _nc_tail = 0;
+#endif
 
 static ENTRY *
 _nc_delink_entry(ENTRY * headp, TERMTYPE2 *tterm)

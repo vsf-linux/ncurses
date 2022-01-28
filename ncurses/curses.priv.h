@@ -866,7 +866,11 @@ struct DriverTCB; /* Terminal Control Block forward declaration */
 #define INIT_TERM_DRIVER()	/* nothing */
 #endif
 
+#ifdef __VSF__
+#	define _nc_globals				(ncurses_ctx->lib_data.___nc_globals)
+#else
 extern NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals;
+#endif
 
 /* The limit reserves one byte for a terminating NUL */
 #define my_getstr_limit	(_nc_globals.getstr_limit - 1)
@@ -888,7 +892,11 @@ extern NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals;
 #define safe_ripoff_stack  _nc_prescreen.rippedoff
 #endif
 
+#ifdef __VSF__
+#	define _nc_prescreen			(ncurses_ctx->lib_data.___nc_prescreen)
+#else
 extern NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen;
+#endif
 
 typedef enum {
     ewInitial = 0,
@@ -1186,8 +1194,13 @@ typedef struct screen {
 #undef SCREEN
 } SCREEN;
 
+#ifdef __VSF__
+#	define _nc_screen_chain				(ncurses_ctx->lib_data.___nc_screen_chain)
+#	define _nc_have_sigwinch			(ncurses_ctx->lib_data.___nc_have_sigwinch)
+#else
 extern NCURSES_EXPORT_VAR(SCREEN *) _nc_screen_chain;
 extern NCURSES_EXPORT_VAR(SIG_ATOMIC_T) _nc_have_sigwinch;
+#endif
 
 	WINDOWLIST {
 	WINDOWLIST *next;
@@ -2178,7 +2191,11 @@ extern int vsscanf(const char *str, const char *format, va_list __arg);
 #endif
 
 /* scroll indices */
+#ifdef __VSF__
+#	define _nc_oldnums				£¨ncurses_ctx->hardscroll.___nc_oldnums)
+#else
 extern NCURSES_EXPORT_VAR(int *) _nc_oldnums;
+#endif
 
 #define USE_SETBUF_0 0
 
@@ -2198,7 +2215,11 @@ extern NCURSES_EXPORT(void)     _nc_set_screen (SCREEN *);
 #define CURRENT_SCREEN          _nc_screen()
 #else
 /* current screen is private data; avoid possible linking conflicts too */
+#ifdef __VSF__
+#define SP						(ncurses_ctx->lib_data.__SP)
+#else
 extern NCURSES_EXPORT_VAR(SCREEN *) SP;
+#endif
 #define CURRENT_SCREEN SP
 #define _nc_alloc_screen()      ((SP = _nc_alloc_screen_sp()) != 0)
 #define _nc_set_screen(sp)      SP = sp
@@ -2545,8 +2566,116 @@ NCURSES_EXPORT(int) _nc_conv_to_utf8(unsigned char *, unsigned, unsigned);
 NCURSES_EXPORT(int) _nc_conv_to_utf32(unsigned *, const char *, unsigned);
 #endif
 
+#ifdef __VSF__
+struct ncurses_ctx_t {
+#if BROKEN_LINKER || USE_REENTRANT
+	// codes.c
+	struct {
+		NCURSES_CONST char ** __ptr_boolcodes;
+		NCURSES_CONST char ** __ptr_numcodes;
+		NCURSES_CONST char ** __ptr_strcodes;
+	} codes;
+#endif
+
+	// names.h
+	struct {
+		NCURSES_CONST char ** __ptr_boolfnames;
+		NCURSES_CONST char ** __ptr_boolnames;
+		NCURSES_CONST char ** __ptr_numfnames;
+		NCURSES_CONST char ** __ptr_numnames;
+		NCURSES_CONST char ** __ptr_strfnames;
+		NCURSES_CONST char ** __ptr_strnames;
+	} names;
+
+	// alloc_entry.c
+	struct {
+		char *__stringbuf;
+		size_t __next_free;
+	} alloc_entry;
+
+	// captioninfo.c
+	struct {
+#define MAX_PUSHED 16
+		int __stack[MAX_PUSHED];
+#undef MAX_PUSHED
+		int __stackptr;
+		int __onstack;
+		int __seenm;
+		int __seenn;
+		int __seenr;
+		int __param;
+		char *__dp;
+		char *__my_string;
+		size_t __my_length;
+		struct {
+			char __temp[2];
+		} save_char;
+	} captioninfo;
+
+	struct {
+		NCURSES_EXPORT_VAR (chtype) __acs_map[ACS_LEN];
+	} lib_acs;
+
+	struct {
+		int __current_lines;
+		int __current_cols;
+	} resizeterm;
+
+	struct {
+		NCURSES_EXPORT_VAR(int) __COLOR_PAIRS;
+		NCURSES_EXPORT_VAR(int) __COLORS;
+	} lib_color;
+
+	struct {
+		NCURSES_EXPORT_VAR(SCREEN *) ___nc_screen_chain;
+		NCURSES_EXPORT_VAR(SCREEN *) __SP;
+		NCURSES_EXPORT_VAR(NCURSES_GLOBALS) ___nc_globals;
+		NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) ___nc_prescreen;
+	} lib_data;
+
+	struct {
+		NCURSES_EXPORT_VAR(ENTRY *) ___nc_head;
+		NCURSES_EXPORT_VAR(ENTRY *) ___nc_tail;
+	} term_entry;
+
+	struct {
+		int __last_OSpeed;
+		int __last_baudrate;
+	} lib_baudrate;
+
+	struct {
+		NCURSES_EXPORT_VAR(TERMINAL *) __cur_term;
+	} lib_cur_term;
+
+	struct {
+		struct {
+			char *__mybuf[4];
+		} _nc_visbuf2n;
+	} visbuf;
+
+	struct {
+		NCURSES_EXPORT_VAR (int *)___nc_oldnums;
+	} hardscroll;
+
+	NCURSES_EXPORT_VAR(WINDOW *) __curscr;
+	NCURSES_EXPORT_VAR(WINDOW *) __newscr;
+	NCURSES_EXPORT_VAR(WINDOW *) __stdscr;
+	NCURSES_EXPORT_VAR(char) __ttytype[NAMESIZE];
+	NCURSES_EXPORT_VAR(int) __COLORS;
+	NCURSES_EXPORT_VAR(int) __COLOR_PAIRS;
+	NCURSES_EXPORT_VAR(int) __COLS;
+	NCURSES_EXPORT_VAR(int) __ESCDELAY;			// = 1000;
+	NCURSES_EXPORT_VAR(int) __LINES;
+	NCURSES_EXPORT_VAR(int) __TABSIZE;			// = 8;
+};
+#endif
+
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef __VSF__
+#	include "ncurses_port_vsf.h"
 #endif
 
 /* *INDENT-ON* */

@@ -108,6 +108,18 @@ MODULE_ID("$Id: captoinfo.c,v 1.102 2021/09/04 10:29:15 tom Exp $")
 
 #define MAX_PUSHED	16	/* max # args we can push onto the stack */
 
+#ifdef __VSF__
+#	define stack		(ncurses_ctx->captioninfo.__stack)
+#	define stackptr		(ncurses_ctx->captioninfo.__stackptr)
+#	define onstack		(ncurses_ctx->captioninfo.__onstack)
+#	define seenm		(ncurses_ctx->captioninfo.__seenm)
+#	define seenn		(ncurses_ctx->captioninfo.__seenn)
+#	define seenr		(ncurses_ctx->captioninfo.__seenr)
+#	define param		(ncurses_ctx->captioninfo.__param)
+#	define dp			(ncurses_ctx->captioninfo.__dp)
+#	define my_string	(ncurses_ctx->captioninfo.__my_string)
+#	define my_length	(ncurses_ctx->captioninfo.__my_length)
+#else
 static int stack[MAX_PUSHED];	/* the stack */
 static int stackptr;		/* the next empty place on the stack */
 static int onstack;		/* the top of stack */
@@ -119,6 +131,7 @@ static char *dp;		/* pointer to end of the converted string */
 
 static char *my_string;
 static size_t my_length;
+#endif
 
 static char *
 init_string(void)
@@ -149,9 +162,16 @@ save_string(char *d, const char *const s)
 static NCURSES_INLINE char *
 save_char(char *s, int c)
 {
+#ifdef __VSF__
+#	define temp			(ncurses_ctx->captioninfo.save_char.__temp)
+#else
     static char temp[2];
+#endif
     temp[0] = (char) c;
     return save_string(s, temp);
+#ifdef __VSF__
+#	undef temp
+#endif
 }
 
 static void

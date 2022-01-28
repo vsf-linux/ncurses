@@ -66,7 +66,11 @@ static struct name_table_entry const *lookup_fullname(const char *name);
 static struct name_table_entry const *
 _nc_extend_names(ENTRY * entryp, const char *name, int token_type)
 {
+#ifdef __VSF__
+#	define temp					(ncurses_tic_ctx->parse_entry.__temp)
+#else
     static struct name_table_entry temp;
+#endif
     TERMTYPE2 *tp = &(entryp->tterm);
     unsigned offset = 0;
     unsigned actual;
@@ -178,6 +182,9 @@ _nc_extend_names(ENTRY * entryp, const char *name, int token_type)
     temp.nte_link = -1;
 
     return &temp;
+#ifdef __VSF__
+#	undef temp
+#endif
 }
 
 static const char *

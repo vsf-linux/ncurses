@@ -132,8 +132,13 @@ struct entry {
 	ENTRY *last;
 };
 
+#ifdef __VSF__
+#	define _nc_head		(ncurses_ctx->term_entry.___nc_head)
+#	define _nc_tail		(ncurses_ctx->term_entry.___nc_tail)
+#else
 extern NCURSES_EXPORT_VAR(ENTRY *) _nc_head;
 extern NCURSES_EXPORT_VAR(ENTRY *) _nc_tail;
+#endif
 #define for_entry_list(qp)	for (qp = _nc_head; qp; qp = qp->next)
 
 #define MAX_LINE	132

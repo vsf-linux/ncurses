@@ -163,10 +163,12 @@ NCURSES_PUBLIC_VAR(TABSIZE) (void)
     return *_nc_ptr_Tabsize(CURRENT_SCREEN);
 }
 #else
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(char) ttytype[NAMESIZE] = "";
 NCURSES_EXPORT_VAR(int) LINES = 0;
 NCURSES_EXPORT_VAR(int) COLS = 0;
 NCURSES_EXPORT_VAR(int) TABSIZE = 8;
+#endif
 #endif
 
 #if NCURSES_EXT_FUNCS

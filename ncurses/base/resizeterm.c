@@ -55,8 +55,13 @@ MODULE_ID("$Id: resizeterm.c,v 1.51 2021/09/04 10:54:35 tom Exp $")
 #define EXTRA_ARGS ,     CurLines,     CurCols
 #define EXTRA_DCLS , int CurLines, int CurCols
 #else
+#ifdef __VSF__
+#	define current_lines			(ncurses_ctx->resizeterm.__current_lines)
+#	define current_cols				(ncurses_ctx->resizeterm.__current_cols)
+#else
 static int current_lines;
 static int current_cols;
+#endif
 #define CurLines current_lines
 #define CurCols  current_cols
 #define EXTRA_ARGS		/* nothing */

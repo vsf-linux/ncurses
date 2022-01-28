@@ -50,7 +50,9 @@
 
 MODULE_ID("$Id: lib_trace.c,v 1.99 2021/06/26 20:44:59 tom Exp $")
 
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(unsigned) _nc_tracing = 0; /* always define this */
+#endif
 
 #ifdef TRACE
 

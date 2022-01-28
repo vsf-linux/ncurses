@@ -63,7 +63,9 @@ _nc_ptr_Escdelay(SCREEN *sp)
 }
 #else
 #define GetEscdelay(sp) ESCDELAY
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(int) ESCDELAY = 1000;
+#endif
 #endif
 
 #if NCURSES_EXT_FUNCS

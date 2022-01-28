@@ -66,12 +66,16 @@ NCURSES_PUBLIC_VAR(newscr) (void)
     return CURRENT_SCREEN ? NewScreen(CURRENT_SCREEN) : 0;
 }
 #else
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(WINDOW *) stdscr = 0;
 NCURSES_EXPORT_VAR(WINDOW *) curscr = 0;
 NCURSES_EXPORT_VAR(WINDOW *) newscr = 0;
 #endif
+#endif
 
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(SCREEN *) _nc_screen_chain = 0;
+#endif
 
 /*
  * The variable 'SP' will be defined as a function on systems that cannot link
@@ -107,10 +111,13 @@ _nc_set_screen(SCREEN *sp)
 }
 
 #else
-
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(SCREEN *) SP = NULL; /* Some linkers require initialized data... */
 #endif
+#endif
 /* *INDENT-OFF* */
+
+#ifndef __VSF__
 #define CHARS_0s { '\0' }
 
 #define TGETENT_0 { 0L, FALSE, NULL, NULL, NULL }
@@ -281,6 +288,7 @@ NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen = {
 #endif
 #endif
 };
+#endif
 /* *INDENT-ON* */
 
 /*
