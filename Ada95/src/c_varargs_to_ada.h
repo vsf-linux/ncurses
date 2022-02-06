@@ -39,6 +39,9 @@
 #endif
 
 #include <stdlib.h>
+#ifdef __VSF__
+#	include "ncurses_port_vsf.h"
+#endif
 
 #include <form.h>
 

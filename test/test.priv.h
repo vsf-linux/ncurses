@@ -369,6 +369,9 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
+#ifdef __VSF__
+#	include "ncurses_port_vsf.h"
+#endif
 #include <sys/types.h>
 #include <errno.h>
 

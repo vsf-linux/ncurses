@@ -57,6 +57,9 @@
 #ifndef _QNX_SOURCE
 #include <stdlib.h>
 #include <string.h>
+#ifdef __VSF__
+#	include "ncurses_port_vsf.h"
+#endif
 #endif
 
 #ifndef CTRL

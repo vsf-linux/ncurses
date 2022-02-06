@@ -52,6 +52,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#ifdef __VSF__
+#	include "ncurses_port_vsf.h"
+#endif
 #include <sys/types.h>
 
 #if HAVE_UNISTD_H
