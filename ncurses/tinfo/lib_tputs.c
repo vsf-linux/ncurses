@@ -54,10 +54,20 @@
 
 MODULE_ID("$Id: lib_tputs.c,v 1.108 2021/05/08 23:27:40 tom Exp $")
 
+#ifdef __VSF__
+define_vsf_ncurses_mod(ncurses_tinfo_tputs,
+	sizeof(struct __ncurses_tinfo_tputs_ctx),
+	VSF_NCURSES_MOD_TINFO_TPUTS,
+	NULL
+)
+#endif
+
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(char) PC = 0;              /* used by termcap library */
 NCURSES_EXPORT_VAR(NCURSES_OSPEED) ospeed = 0;        /* used by termcap library */
 
 NCURSES_EXPORT_VAR(int) _nc_nulls_sent = 0;   /* used by 'tack' program */
+#endif
 
 #if NCURSES_NO_PADDING
 NCURSES_EXPORT(void)

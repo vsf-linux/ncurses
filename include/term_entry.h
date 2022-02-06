@@ -132,8 +132,24 @@ struct entry {
 	ENTRY *last;
 };
 
+#ifdef __VSF__
+struct __ncurses_tinfo_entries_ctx {
+	NCURSES_EXPORT_VAR(ENTRY *) ___nc_head;
+	NCURSES_EXPORT_VAR(ENTRY *) ___nc_tail;
+};
+declare_vsf_ncurses_mod(ncurses_tinfo_entries)
+#	define ncurses_tinfo_entries_ctx					\
+		((struct __ncurses_tinfo_entries_ctx *)			\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_entries)))
+#endif
+
+#ifdef __VSF__
+#	define _nc_head		(ncurses_tinfo_entries_ctx->___nc_head)
+#	define _nc_tail		(ncurses_tinfo_entries_ctx->___nc_tail)
+#else
 extern NCURSES_EXPORT_VAR(ENTRY *) _nc_head;
 extern NCURSES_EXPORT_VAR(ENTRY *) _nc_tail;
+#endif
 #define for_entry_list(qp)	for (qp = _nc_head; qp; qp = qp->next)
 
 #define MAX_LINE	132
@@ -183,8 +199,23 @@ extern NCURSES_EXPORT(char *) _nc_trim_sgr0 (TERMTYPE2 *);
 
 /* parse_entry.c: entry-parsing code */
 #if NCURSES_XNAMES
+#ifdef __VSF__
+struct __ncurses_tinfo_free_ttype_ctx {
+	NCURSES_EXPORT_VAR(bool) ___nc_user_definable;
+};
+declare_vsf_ncurses_mod(ncurses_tinfo_free_ttype)
+#	define ncurses_tinfo_free_ttype_ctx					\
+		((struct __ncurses_tinfo_free_ttype_ctx *)		\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_free_ttype)))
+#endif
+
+#ifdef __VSF__
+#	define _nc_user_definable		(ncurses_tinfo_free_ttype_ctx->___nc_user_definable)
+#	define _nc_disable_period		(ncurses_tinfo_comp_scan_ctx->___nc_disable_period)
+#else
 extern NCURSES_EXPORT_VAR(bool) _nc_user_definable;
 extern NCURSES_EXPORT_VAR(bool) _nc_disable_period;
+#endif
 #endif
 extern NCURSES_EXPORT(int) _nc_parse_entry (ENTRY *, int, bool);
 extern NCURSES_EXPORT(int) _nc_capcmp (const char *, const char *);

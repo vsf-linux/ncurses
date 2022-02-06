@@ -74,7 +74,17 @@ NCURSES_PUBLIC_VAR(cur_term) (void)
 }
 
 #else
+#ifdef __VSF__
+define_vsf_ncurses_mod(ncurses_tinfo_cur_term,
+	sizeof(struct __ncurses_tinfo_cur_term_ctx),
+	VSF_NCURSES_MOD_TINFO_CUR_TERM,
+	NULL
+)
+#endif
+
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(TERMINAL *) cur_term = 0;
+#endif
 #endif
 
 NCURSES_EXPORT(TERMINAL *)

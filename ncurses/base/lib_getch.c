@@ -48,6 +48,20 @@ MODULE_ID("$Id: lib_getch.c,v 1.142 2021/09/04 10:52:55 tom Exp $")
 
 #include <fifo_defs.h>
 
+#if !USE_REENTRANT
+#ifdef __VSF__
+static void __ncurses_getch_mod_init(void *ctx)
+{
+	ESCDELAY = 1000;
+}
+define_vsf_ncurses_mod(ncurses_getch,
+	sizeof(struct __ncurses_getch_ctx),
+	VSF_NCURSES_MOD_GETCH,
+	__ncurses_getch_mod_init
+)
+#endif
+#endif
+
 #if USE_REENTRANT
 #define GetEscdelay(sp) *_nc_ptr_Escdelay(sp)
 NCURSES_EXPORT(int)
@@ -63,7 +77,9 @@ _nc_ptr_Escdelay(SCREEN *sp)
 }
 #else
 #define GetEscdelay(sp) ESCDELAY
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(int) ESCDELAY = 1000;
+#endif
 #endif
 
 #if NCURSES_EXT_FUNCS

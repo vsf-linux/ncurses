@@ -108,6 +108,44 @@ MODULE_ID("$Id: captoinfo.c,v 1.102 2021/09/04 10:29:15 tom Exp $")
 
 #define MAX_PUSHED	16	/* max # args we can push onto the stack */
 
+#ifdef __VSF__
+struct __ncurses_tinfo_captoinfo_ctx {
+	int stack[MAX_PUSHED];
+	int stackptr;
+	int onstack;
+	int seenm;
+	int seenn;
+	int seenr;
+	int param;
+	char *dp;
+	char *my_string;
+	size_t my_length;
+	struct {
+		char temp[2];
+	} save_char;
+};
+define_vsf_ncurses_mod(ncurses_tinfo_captoinfo,
+	sizeof(struct __ncurses_tinfo_captoinfo_ctx),
+	VSF_NCURSES_MOD_TINFO_CAPTOINFO,
+	NULL
+)
+#	define ncurses_tinfo_captoinfo_ctx				\
+		((struct __ncurses_tinfo_captoinfo_ctx *)	\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_captoinfo)))
+#endif
+
+#ifdef __VSF__
+#	define stack		(ncurses_tinfo_captoinfo_ctx->stack)
+#	define stackptr		(ncurses_tinfo_captoinfo_ctx->stackptr)
+#	define onstack		(ncurses_tinfo_captoinfo_ctx->onstack)
+#	define seenm		(ncurses_tinfo_captoinfo_ctx->seenm)
+#	define seenn		(ncurses_tinfo_captoinfo_ctx->seenn)
+#	define seenr		(ncurses_tinfo_captoinfo_ctx->seenr)
+#	define param		(ncurses_tinfo_captoinfo_ctx->param)
+#	define dp			(ncurses_tinfo_captoinfo_ctx->dp)
+#	define my_string	(ncurses_tinfo_captoinfo_ctx->my_string)
+#	define my_length	(ncurses_tinfo_captoinfo_ctx->my_length)
+#else
 static int stack[MAX_PUSHED];	/* the stack */
 static int stackptr;		/* the next empty place on the stack */
 static int onstack;		/* the top of stack */
@@ -119,6 +157,7 @@ static char *dp;		/* pointer to end of the converted string */
 
 static char *my_string;
 static size_t my_length;
+#endif
 
 static char *
 init_string(void)
@@ -149,9 +188,16 @@ save_string(char *d, const char *const s)
 static NCURSES_INLINE char *
 save_char(char *s, int c)
 {
+#ifdef __VSF__
+#	define temp			(ncurses_tinfo_captoinfo_ctx->save_char.temp)
+#else
     static char temp[2];
+#endif
     temp[0] = (char) c;
     return save_string(s, temp);
+#ifdef __VSF__
+#	undef temp
+#endif
 }
 
 static void

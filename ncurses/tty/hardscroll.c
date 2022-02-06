@@ -150,6 +150,16 @@ AUTHOR
 
 MODULE_ID("$Id: hardscroll.c,v 1.54 2020/02/02 23:34:34 tom Exp $")
 
+#if !(defined(SCROLLDEBUG) || defined(HASHDEBUG))
+#ifdef __VSF__
+define_vsf_ncurses_mod(ncurses_hardscroll,
+    sizeof(struct __ncurses_hardscroll_ctx),
+    VSF_NCURSES_MOD_HARDSCROLL,
+    NULL
+)
+#endif
+#endif
+
 #if defined(SCROLLDEBUG) || defined(HASHDEBUG)
 
 # undef screen_lines
@@ -168,8 +178,10 @@ extern				NCURSES_EXPORT_VAR(unsigned) _nc_tracing;
 /* OLDNUM(n) indicates which line will be shifted to the position n.
    if OLDNUM(n) == _NEWINDEX, then the line n in new, not shifted from
    somewhere. */
+#ifndef __VSF__
 NCURSES_EXPORT_VAR (int *)
   _nc_oldnums = 0;		/* obsolete: keep for ABI compat */
+#endif
 
 # if USE_HASHMAP
 #  define oldnums(sp)   (sp)->_oldnum_list

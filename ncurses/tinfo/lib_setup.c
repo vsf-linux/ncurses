@@ -77,6 +77,20 @@ MODULE_ID("$Id: lib_setup.c,v 1.214 2021/09/01 23:38:12 tom Exp $")
 #include <langinfo.h>
 #endif
 
+#if !USE_REENTRANT
+#ifdef __VSF__
+static void __ncurses_tinfo_setup_mod_init(void *ctx)
+{
+	TABSIZE = 8;
+}
+define_vsf_ncurses_mod(ncurses_tinfo_setup,
+	sizeof(struct __ncurses_tinfo_setup_ctx),
+	VSF_NCURSES_MOD_TINFO_SETUP,
+	__ncurses_tinfo_setup_mod_init
+)
+#endif
+#endif
+
 /*
  * SCO defines TIOCGSIZE and the corresponding struct.  Other systems (SunOS,
  * Solaris, IRIX) define TIOCGWINSZ and struct winsize.
@@ -163,10 +177,12 @@ NCURSES_PUBLIC_VAR(TABSIZE) (void)
     return *_nc_ptr_Tabsize(CURRENT_SCREEN);
 }
 #else
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(char) ttytype[NAMESIZE] = "";
 NCURSES_EXPORT_VAR(int) LINES = 0;
 NCURSES_EXPORT_VAR(int) COLS = 0;
 NCURSES_EXPORT_VAR(int) TABSIZE = 8;
+#endif
 #endif
 
 #if NCURSES_EXT_FUNCS

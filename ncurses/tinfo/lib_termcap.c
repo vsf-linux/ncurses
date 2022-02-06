@@ -51,8 +51,18 @@
 
 MODULE_ID("$Id: lib_termcap.c,v 1.88 2020/02/02 23:34:34 tom Exp $")
 
+#ifdef __VSF__
+define_vsf_ncurses_mod(ncurses_tinfo_termcap,
+	sizeof(struct __ncurses_tinfo_termcap_ctx),
+	VSF_NCURSES_MOD_TINFO_TERMCAP,
+	NULL
+)
+#endif
+
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(char *) UP = 0;
 NCURSES_EXPORT_VAR(char *) BC = 0;
+#endif
 
 #define MyCache  _nc_globals.tgetent_cache
 #define CacheInx _nc_globals.tgetent_index

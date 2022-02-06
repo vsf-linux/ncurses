@@ -45,6 +45,22 @@
 
 MODULE_ID("$Id: visbuf.c,v 1.53 2021/02/27 20:07:57 tom Exp $")
 
+#ifdef __VSF__
+struct __ncurses_trace_visbuf_ctx {
+	struct {
+		char *mybuf[4];
+	} _nc_visbuf2n;
+};
+define_vsf_ncurses_mod(ncurses_trace_visbuf,
+	sizeof(struct __ncurses_trace_visbuf_ctx),
+	VSF_NCURSES_MOD_TRACE_VISBUF,
+	NULL
+)
+#	define ncurses_trace_visbuf_ctx					\
+		((struct __ncurses_trace_visbuf_ctx *)		\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_trace_visbuf)))
+#endif
+
 #define NUM_VISBUFS 4
 
 #define NormalLen(len) (size_t) (((size_t)(len) + 1) * 4)
@@ -124,7 +140,11 @@ _nc_visbuf2n(int bufnum, const char *buf, int len)
     vbuf = tp = _nc_trace_buf(bufnum, NormalLen(len));
 #else
     {
+#ifdef __VSF__
+#	define mybuf				(ncurses_trace_visbuf_ctx->_nc_visbuf2n.mybuf)
+#else
 	static char *mybuf[NUM_VISBUFS];
+#endif
 	int c;
 
 	if (bufnum < 0) {
@@ -136,6 +156,9 @@ _nc_visbuf2n(int bufnum, const char *buf, int len)
 	    mybuf[bufnum] = typeRealloc(char, NormalLen(len), mybuf[bufnum]);
 	    vbuf = tp = mybuf[bufnum];
 	}
+#ifdef __VSF__
+#	undef mybuf
+#endif
     }
 #endif
     if (tp != 0) {

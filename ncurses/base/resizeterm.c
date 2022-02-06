@@ -48,6 +48,23 @@
 
 MODULE_ID("$Id: resizeterm.c,v 1.51 2021/09/04 10:54:35 tom Exp $")
 
+#if !USE_REENTRANT
+#ifdef __VSF__
+struct __ncurses_resizeterm_ctx {
+	int current_lines;
+	int current_cols;
+};
+define_vsf_ncurses_mod(ncurses_resizeterm,
+	sizeof(struct __ncurses_resizeterm_ctx),
+	VSF_NCURSES_MOD_RESIZETERM,
+	NULL
+)
+#	define ncurses_resizeterm_ctx					\
+		((struct __ncurses_resizeterm_ctx *)		\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_resizeterm)))
+#endif
+#endif
+
 /*
  * If we're trying to be reentrant, do not want any local statics.
  */
@@ -55,8 +72,13 @@ MODULE_ID("$Id: resizeterm.c,v 1.51 2021/09/04 10:54:35 tom Exp $")
 #define EXTRA_ARGS ,     CurLines,     CurCols
 #define EXTRA_DCLS , int CurLines, int CurCols
 #else
+#ifdef __VSF__
+#	define current_lines			(ncurses_resizeterm_ctx->current_lines)
+#	define current_cols				(ncurses_resizeterm_ctx->current_cols)
+#else
 static int current_lines;
 static int current_cols;
+#endif
 #define CurLines current_lines
 #define CurCols  current_cols
 #define EXTRA_ARGS		/* nothing */

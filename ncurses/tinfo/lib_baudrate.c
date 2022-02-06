@@ -86,6 +86,25 @@
 
 MODULE_ID("$Id: lib_baudrate.c,v 1.45 2020/09/05 21:15:32 tom Exp $")
 
+#if !defined(EXP_WIN32_DRIVER) && !USE_REENTRANT
+#ifdef __VSF__
+struct __ncurses_tinfo_baudrate_ctx {
+	struct {
+		int last_OSpeed;
+		int last_baudrate;
+	} _nc_baudrate;
+};
+define_vsf_ncurses_mod(ncurses_tinfo_baudrate,
+	sizeof(struct __ncurses_tinfo_baudrate_ctx),
+	VSF_NCURSES_MOD_TINFO_BAUDRATE,
+	NULL
+)
+#	define ncurses_tinfo_baudrate_ctx			    \
+		((struct __ncurses_tinfo_baudrate_ctx *)	\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_baudrate)))
+#endif
+#endif
+
 /*
  *	int
  *	baudrate()
@@ -200,8 +219,13 @@ _nc_baudrate(int OSpeed)
     return (OK);
 #else
 #if !USE_REENTRANT
+#ifdef __VSF__
+#	define last_OSpeed			(ncurses_tinfo_baudrate_ctx->_nc_baudrate.last_OSpeed)
+#	define last_baudrate		(ncurses_tinfo_baudrate_ctx->_nc_baudrate.last_baudrate)
+#else
     static int last_OSpeed;
     static int last_baudrate;
+#endif
 #endif
 
     int result = ERR;
@@ -234,6 +258,10 @@ _nc_baudrate(int OSpeed)
 	    last_OSpeed = OSpeed;
 	    last_baudrate = result;
 	}
+#ifdef __VSF__
+#	undef last_OSpeed
+#	undef last_baudrate
+#endif
 #endif
     }
     return (result);

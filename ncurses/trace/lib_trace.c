@@ -50,7 +50,17 @@
 
 MODULE_ID("$Id: lib_trace.c,v 1.99 2021/06/26 20:44:59 tom Exp $")
 
+#ifdef __VSF__
+define_vsf_ncurses_mod(ncurses_trace,
+    sizeof(struct __ncurses_trace_ctx),
+    VSF_NCURSES_MOD_TRACE,
+    NULL
+)
+#endif
+
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(unsigned) _nc_tracing = 0; /* always define this */
+#endif
 
 #ifdef TRACE
 

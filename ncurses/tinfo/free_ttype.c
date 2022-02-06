@@ -84,7 +84,17 @@ _nc_free_termtype2(TERMTYPE2 *ptr)
 #endif
 
 #if NCURSES_XNAMES
+#ifdef __VSF__
+define_vsf_ncurses_mod(ncurses_tinfo_free_ttype,
+    sizeof(struct __ncurses_tinfo_free_ttype_ctx),
+    VSF_NCURSES_MOD_TINFO_FREE_TTYPE,
+    NULL
+)
+#endif
+
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(bool) _nc_user_definable = TRUE;
+#endif
 
 NCURSES_EXPORT(int)
 use_extended_names(bool flag)

@@ -859,6 +859,83 @@ typedef int (*TYPE_Gpm_GetEvent) (Gpm_Event *);
 #define TRACEMSE_MAX	(80 + (5 * 10) + (32 * 15))
 #define TRACEMSE_FMT	"id %2d  at (%2d, %2d, %2d) state %4lx = {" /* } */
 
+#ifdef __VSF__
+// tinfo/lib_data.c
+struct __ncurses_tinfo_data_ctx {
+#if !USE_REENTRANT
+	NCURSES_EXPORT_VAR(WINDOW *) __stdscr;
+	NCURSES_EXPORT_VAR(WINDOW *) __curscr;
+	NCURSES_EXPORT_VAR(WINDOW *) __newscr;
+#endif
+#if !BROKEN_LINKER
+	NCURSES_EXPORT_VAR(SCREEN *) __SP;
+#endif
+	NCURSES_EXPORT_VAR(SCREEN *) ___nc_screen_chain;
+	NCURSES_EXPORT_VAR(NCURSES_GLOBALS) ___nc_globals;
+	NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) ___nc_prescreen;
+};
+declare_vsf_ncurses_mod(ncurses_tinfo_data)
+#	define ncurses_tinfo_data_ctx					\
+		((struct __ncurses_tinfo_data_ctx *)		\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_data)))
+
+#if !(BROKEN_LINKER || USE_REENTRANT)
+// tinfo/lib_acs.c
+struct __ncurses_tinfo_acs_ctx {
+	NCURSES_EXPORT_VAR (chtype) __acs_map[ACS_LEN];
+};
+declare_vsf_ncurses_mod(ncurses_tinfo_acs)
+#	define ncurses_tinfo_acs_ctx					\
+		((struct __ncurses_tinfo_acs_ctx *)			\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_acs)))
+#endif
+
+// base/lib_color.c
+struct __ncurses_color_ctx {
+#if !USE_REENTRANT
+	NCURSES_EXPORT_VAR(int) __COLOR_PAIRS;
+	NCURSES_EXPORT_VAR(int) __COLORS;
+#endif
+};
+declare_vsf_ncurses_mod(ncurses_color)
+#	define ncurses_color_ctx		((struct __ncurses_color_ctx *)vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_color)))
+
+// tinfo/lib_cur_term.c
+struct __ncurses_tinfo_cur_term_ctx {
+	NCURSES_EXPORT_VAR(TERMINAL *) __cur_term;
+};
+declare_vsf_ncurses_mod(ncurses_tinfo_cur_term)
+#	define ncurses_cur_term_ctx		((struct __ncurses_tinfo_cur_term_ctx *)vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_cur_term)))
+
+// tty/hardscroll.c
+struct __ncurses_hardscroll_ctx {
+	NCURSES_EXPORT_VAR (int *)___nc_oldnums;
+};
+declare_vsf_ncurses_mod(ncurses_hardscroll)
+#	define ncurses_hardscroll_ctx	((struct __ncurses_hardscroll_ctx *)vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_hardscroll)))
+
+// tinfo/lib_setup.c
+#if !USE_REENTRANT
+struct __ncurses_tinfo_setup_ctx {
+	NCURSES_EXPORT_VAR(char) __ttytype[NAMESIZE];
+	NCURSES_EXPORT_VAR(int) __LINES;
+	NCURSES_EXPORT_VAR(int) __COLS;
+	NCURSES_EXPORT_VAR(int) __TABSIZE;		// = 8;
+};
+declare_vsf_ncurses_mod(ncurses_tinfo_setup)
+#	define ncurses_tinfo_setup_ctx	((struct __ncurses_tinfo_setup_ctx *)vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_setup)))
+#endif
+
+// base/lib_getch.c
+#if !USE_REENTRANT
+struct __ncurses_getch_ctx {
+	NCURSES_EXPORT_VAR(int) __ESCDELAY;		// = 1000;
+};
+declare_vsf_ncurses_mod(ncurses_getch)
+#	define ncurses_getch_ctx		((struct __ncurses_getch_ctx *)vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_getch)))
+#endif
+#endif
+
 #ifdef USE_TERM_DRIVER
 struct DriverTCB; /* Terminal Control Block forward declaration */
 #define INIT_TERM_DRIVER()	_nc_globals.term_driver = _nc_get_driver
@@ -866,7 +943,11 @@ struct DriverTCB; /* Terminal Control Block forward declaration */
 #define INIT_TERM_DRIVER()	/* nothing */
 #endif
 
+#ifdef __VSF__
+#	define _nc_globals				(ncurses_tinfo_data_ctx->___nc_globals)
+#else
 extern NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals;
+#endif
 
 /* The limit reserves one byte for a terminating NUL */
 #define my_getstr_limit	(_nc_globals.getstr_limit - 1)
@@ -888,7 +969,11 @@ extern NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals;
 #define safe_ripoff_stack  _nc_prescreen.rippedoff
 #endif
 
+#ifdef __VSF__
+#	define _nc_prescreen			(ncurses_tinfo_data_ctx->___nc_prescreen)
+#else
 extern NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen;
+#endif
 
 typedef enum {
     ewInitial = 0,
@@ -1186,8 +1271,13 @@ typedef struct screen {
 #undef SCREEN
 } SCREEN;
 
+#ifdef __VSF__
+#	define _nc_screen_chain				(ncurses_tinfo_data_ctx->___nc_screen_chain)
+#	define _nc_have_sigwinch			(ncurses_tinfo_data_ctx->___nc_have_sigwinch)
+#else
 extern NCURSES_EXPORT_VAR(SCREEN *) _nc_screen_chain;
 extern NCURSES_EXPORT_VAR(SIG_ATOMIC_T) _nc_have_sigwinch;
+#endif
 
 	WINDOWLIST {
 	WINDOWLIST *next;
@@ -2178,7 +2268,11 @@ extern int vsscanf(const char *str, const char *format, va_list __arg);
 #endif
 
 /* scroll indices */
+#ifdef __VSF__
+#	define _nc_oldnums					ncurses_hardscroll_ctx->___nc_oldnums)
+#else
 extern NCURSES_EXPORT_VAR(int *) _nc_oldnums;
+#endif
 
 #define USE_SETBUF_0 0
 
@@ -2198,7 +2292,11 @@ extern NCURSES_EXPORT(void)     _nc_set_screen (SCREEN *);
 #define CURRENT_SCREEN          _nc_screen()
 #else
 /* current screen is private data; avoid possible linking conflicts too */
+#ifdef __VSF__
+#	define SP							(ncurses_tinfo_data_ctx->__SP)
+#else
 extern NCURSES_EXPORT_VAR(SCREEN *) SP;
+#endif
 #define CURRENT_SCREEN SP
 #define _nc_alloc_screen()      ((SP = _nc_alloc_screen_sp()) != 0)
 #define _nc_set_screen(sp)      SP = sp

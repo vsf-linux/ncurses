@@ -50,13 +50,33 @@
 
 MODULE_ID("$Id: alloc_entry.c,v 1.66 2021/08/08 00:09:37 tom Exp $")
 
+#ifdef __VSF__
+struct __ncurses_tinfo_alloc_entry_ctx {
+	char *stringbuf;
+	size_t next_free;
+};
+define_vsf_ncurses_mod(ncurses_tinfo_alloc_entry,
+	sizeof(struct __ncurses_tinfo_alloc_entry_ctx),
+	VSF_NCURSES_MOD_TINFO_ALLOC_ENTRY,
+	NULL
+)
+#	define ncurses_tinfo_alloc_entry_ctx			\
+		((struct __ncurses_tinfo_alloc_entry_ctx *)	\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_alloc_entry)))
+#endif
+
 #define ABSENT_OFFSET    -1
 #define CANCELLED_OFFSET -2
 
 #define MAX_STRTAB	4096	/* documented maximum entry size */
 
+#ifdef __VSF__
+#	define stringbuf		(ncurses_tinfo_alloc_entry_ctx->stringbuf)
+#	define next_free		(ncurses_tinfo_alloc_entry_ctx->next_free)
+#else
 static char *stringbuf;		/* buffer for string capabilities */
 static size_t next_free;	/* next free character in stringbuf */
+#endif
 
 NCURSES_EXPORT(void)
 _nc_init_entry(ENTRY * const tp)

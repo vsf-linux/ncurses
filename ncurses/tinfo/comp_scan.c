@@ -53,6 +53,18 @@
 
 MODULE_ID("$Id: comp_scan.c,v 1.112 2021/10/04 23:56:28 tom Exp $")
 
+#ifdef __VSF__
+static void __ncurses_tinfo_comp_scan_mod_init(void *ctx)
+{
+	_nc_strict_bsd = 1;
+}
+define_vsf_ncurses_mod(ncurses_tinfo_comp_scan,
+	sizeof(struct __ncurses_tinfo_comp_scan_ctx),
+	VSF_NCURSES_MOD_TINFO_COMP_SCAN,
+	__ncurses_tinfo_comp_scan_mod_init
+)
+#endif
+
 /*
  * Maximum length of string capability we'll accept before raising an error.
  * Yes, there is a real capability in /etc/termcap this long, an "is".
@@ -61,6 +73,7 @@ MODULE_ID("$Id: comp_scan.c,v 1.112 2021/10/04 23:56:28 tom Exp $")
 
 #define iswhite(ch)	(ch == ' '  ||  ch == '\t')
 
+#ifndef __VSF__
 NCURSES_EXPORT_VAR (int) _nc_syntax = 0;         /* termcap or terminfo? */
 NCURSES_EXPORT_VAR (int) _nc_strict_bsd = 1;  /* ncurses extended termcap? */
 NCURSES_EXPORT_VAR (long) _nc_curr_file_pos = 0; /* file offset of current line */
@@ -72,6 +85,7 @@ NCURSES_EXPORT_VAR (struct token) _nc_curr_token =
 {
     0, 0, 0
 };
+#endif
 
 /*****************************************************************************
  *
@@ -79,6 +93,13 @@ NCURSES_EXPORT_VAR (struct token) _nc_curr_token =
  *
  *****************************************************************************/
 
+#ifdef __VSF__
+#	define first_column				(ncurses_tinfo_comp_scan_ctx->first_column)
+#	define had_newline				(ncurses_tinfo_comp_scan_ctx->had_newline)
+#	define separator				(ncurses_tinfo_comp_scan_ctx->separator)
+#	define pushtype					(ncurses_tinfo_comp_scan_ctx->pushtype)
+#	define pushname					(ncurses_tinfo_comp_scan_ctx->pushname)
+#else
 static bool first_column;	/* See 'next_char()' below */
 static bool had_newline;
 static char separator;		/* capability separator */
@@ -87,6 +108,7 @@ static char *pushname;
 
 #if NCURSES_EXT_FUNCS
 NCURSES_EXPORT_VAR (bool) _nc_disable_period = FALSE; /* used by tic -a option */
+#endif
 #endif
 
 /*****************************************************************************
@@ -97,9 +119,15 @@ NCURSES_EXPORT_VAR (bool) _nc_disable_period = FALSE; /* used by tic -a option *
 
 #define LEXBUFSIZ	1024
 
+#ifdef __VSF__
+#	define bufptr					(ncurses_tinfo_comp_scan_ctx->bufptr)
+#	define bufstart					(ncurses_tinfo_comp_scan_ctx->bufstart)
+#	define yyin						(ncurses_tinfo_comp_scan_ctx->yyin)
+#else
 static char *bufptr;		/* otherwise, the input buffer pointer */
 static char *bufstart;		/* start of buffer so we can compute offsets */
 static FILE *yyin;		/* scanner's input file descriptor */
+#endif
 
 /*
  *	_nc_reset_input()
@@ -161,8 +189,13 @@ last_char(int from_end)
 static int
 next_char(void)
 {
+#ifdef __VSF__
+#	define result					(ncurses_tinfo_comp_scan_ctx->next_char.result)
+#	define allocated				(ncurses_tinfo_comp_scan_ctx->next_char.allocated)
+#else
     static char *result;
     static size_t allocated;
+#endif
     int the_char;
 
     if (!yyin) {
@@ -264,6 +297,10 @@ next_char(void)
     _nc_curr_col++;
     the_char = *bufptr++;
     return UChar(the_char);
+#ifdef __VSF__
+#	undef result
+#	undef allocated
+#endif
 }
 
 static void
@@ -310,7 +347,11 @@ eat_escaped_newline(int ch)
 	*tok_ptr++ = (char) ch; \
 	*tok_ptr = '\0'
 
+#ifdef __VSF__
+#	define tok_buf					(ncurses_tinfo_comp_scan_ctx->tok_buf)
+#else
 static char *tok_buf;
+#endif
 
 /*
  *	int

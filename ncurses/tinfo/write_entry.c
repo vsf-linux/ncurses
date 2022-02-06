@@ -53,9 +53,38 @@
 
 MODULE_ID("$Id: write_entry.c,v 1.118 2021/08/15 20:07:11 tom Exp $")
 
+#ifdef __VSF__
+struct __ncurses_tinfo_write_entry_ctx {
+	int total_written;
+	int total_parts;
+	int total_size;
+	struct {
+		bool verified[26 + 26 + 10 + 1];
+	} check_writeable;
+	struct {
+		int call_count;
+		time_t start_time;
+	} _nc_write_entry;
+};
+define_vsf_ncurses_mod(ncurses_tinfo_write_entry,
+	sizeof(struct __ncurses_tinfo_write_entry_ctx),
+	VSF_NCURSES_MOD_TINFO_WRITE_ENTRY,
+	NULL
+)
+#	define ncurses_tinfo_write_entry_ctx			\
+		((struct __ncurses_tinfo_write_entry_ctx *)	\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_write_entry)))
+#endif
+
+#ifdef __VSF__
+#	define total_written				(ncurses_tinfo_write_entry_ctx->total_written)
+#	define total_parts					(ncurses_tinfo_write_entry_ctx->total_parts)
+#	define total_size					(ncurses_tinfo_write_entry_ctx->total_size)
+#else
 static int total_written;
 static int total_parts;
 static int total_size;
+#endif
 
 static int make_db_root(const char *);
 
@@ -113,7 +142,11 @@ static void
 check_writeable(int code)
 {
     static const char dirnames[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+#ifdef __VSF__
+#	define verified					(ncurses_tinfo_write_entry_ctx->check_writeable.verified)
+#else
     static bool verified[sizeof(dirnames)];
+#endif
 
     char dir[sizeof(LEAF_FMT)];
     char *s = 0;
@@ -130,6 +163,9 @@ check_writeable(int code)
     }
 
     verified[s - dirnames] = TRUE;
+#ifdef __VSF__
+#	undef verified
+#endif
 }
 #endif /* !USE_HASHED_DB */
 
@@ -296,8 +332,13 @@ _nc_write_entry(TERMTYPE2 *const tp)
     unsigned limit2 = sizeof(filename) - (2 + LEAF_LEN);
     char saved = '\0';
 
+#ifdef __VSF__
+#	define call_count				(ncurses_tinfo_write_entry_ctx->_nc_write_entry.call_count)
+#	define start_time				(ncurses_tinfo_write_entry_ctx->_nc_write_entry.start_time)
+#else
     static int call_count;
     static time_t start_time;	/* time at start of writes */
+#endif
 
 #endif /* USE_HASHED_DB */
 
@@ -528,6 +569,10 @@ _nc_write_entry(TERMTYPE2 *const tp)
 	    write_file(linkname, tp);
 #endif /* HAVE_LINK */
     }
+#ifdef __VSF__
+#	undef call_count
+#	undef start_time
+#endif
 #endif /* USE_HASHED_DB */
 }
 

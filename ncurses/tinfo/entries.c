@@ -40,6 +40,16 @@
 
 MODULE_ID("$Id: entries.c,v 1.30 2020/02/02 23:34:34 tom Exp $")
 
+#ifdef __VSF__
+static void __ncurses_tinfo_entries_init(void *ctx)
+{
+#if NCURSES_XNAMES
+	_nc_user_definable = TRUE;
+#endif
+}
+define_vsf_ncurses_mod(ncurses_tinfo_entries, sizeof(struct __ncurses_tinfo_entries_ctx), VSF_NCURSES_MOD_TINFO_ENTRIES, __ncurses_tinfo_entries_init)
+#endif
+
 /****************************************************************************
  *
  * Entry queue handling
@@ -61,8 +71,10 @@ MODULE_ID("$Id: entries.c,v 1.30 2020/02/02 23:34:34 tom Exp $")
  *	   _nc_head                _nc_tail
  */
 
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(ENTRY *) _nc_head = 0;
 NCURSES_EXPORT_VAR(ENTRY *) _nc_tail = 0;
+#endif
 
 static ENTRY *
 _nc_delink_entry(ENTRY * headp, TERMTYPE2 *tterm)

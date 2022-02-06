@@ -51,6 +51,26 @@
 
 MODULE_ID("$Id: lib_color.c,v 1.148 2021/10/02 22:55:48 tom Exp $")
 
+#ifdef __VSF__
+define_vsf_ncurses_mod(ncurses_color, sizeof(struct __ncurses_color_ctx), VSF_NCURSES_MOD_COLOR, NULL)
+
+#ifdef __VSF__
+struct __ncurses_color_priv_ctx {
+	struct {
+		colorpair_t null_pair;
+	} _nc_init_pair;
+};
+define_vsf_ncurses_mod(ncurses_color_priv,
+	sizeof(struct __ncurses_color_priv_ctx),
+	VSF_NCURSES_MOD_COLOR_PRIV,
+	NULL
+)
+#	define ncurses_color_priv_ctx				\
+		((struct __ncurses_color_priv_ctx *)	\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_color_priv)))
+#endif
+#endif
+
 #ifdef USE_TERM_DRIVER
 #define CanChange      InfoOf(SP_PARM).canchange
 #define DefaultPalette InfoOf(SP_PARM).defaultPalette
@@ -87,8 +107,10 @@ NCURSES_PUBLIC_VAR(COLORS) (void)
     return SP ? SP->_color_count : -1;
 }
 #else
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(int) COLOR_PAIRS = 0;
 NCURSES_EXPORT_VAR(int) COLORS = 0;
+#endif
 #endif
 #endif /* !USE_TERM_DRIVER */
 
@@ -560,7 +582,11 @@ _nc_reserve_pairs(SCREEN *sp, int want)
 NCURSES_EXPORT(int)
 _nc_init_pair(SCREEN *sp, int pair, int f, int b)
 {
+#ifdef __VSF__
+#	define null_pair	(ncurses_color_priv_ctx->_nc_init_pair.null_pair)
+#else
     static colorpair_t null_pair;
+#endif
     colorpair_t result = null_pair;
     colorpair_t previous;
     int maxcolors;
@@ -683,6 +709,9 @@ _nc_init_pair(SCREEN *sp, int pair, int f, int b)
 #endif
 
     returnCode(OK);
+#ifdef __VSF__
+#	undef null_pair
+#endif
 }
 
 NCURSES_EXPORT(int)

@@ -53,10 +53,19 @@ NCURSES_PUBLIC_VAR(acs_map) (void)
 }
 #undef MyBuffer
 #else
+#ifdef __VSF__
+define_vsf_ncurses_mod(ncurses_tinfo_acs,
+    sizeof(struct __ncurses_tinfo_acs_ctx),
+    VSF_NCURSES_MOD_TINFO_ACS,
+    NULL
+)
+#endif
+#ifndef __VSF__
 NCURSES_EXPORT_VAR (chtype) acs_map[ACS_LEN] =
 {
     0
 };
+#endif
 #endif
 
 #ifdef USE_TERM_DRIVER

@@ -38,6 +38,23 @@
 
 MODULE_ID("$Id: comp_expand.c,v 1.34 2021/09/04 10:29:15 tom Exp $")
 
+#ifdef __VSF__
+struct __ncurses_tinfo_comp_expand_ctx {
+	struct {
+		char *buffer;
+		size_t length;
+	} _nc_tic_expand;
+};
+define_vsf_ncurses_mod(ncurses_tinfo_comp_expand,
+	sizeof(struct __ncurses_tinfo_comp_expand_ctx),
+	VSF_NCURSES_MOD_TINFO_COMP_EXPAND,
+	NULL
+)
+#	define ncurses_tinfo_comp_expand_ctx			\
+		((struct __ncurses_tinfo_comp_expand_ctx *)	\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_comp_expand)))
+#endif
+
 #if 0
 #define DEBUG_THIS(p) DEBUG(9, p)
 #else
@@ -60,8 +77,13 @@ trailing_spaces(const char *src)
 NCURSES_EXPORT(char *)
 _nc_tic_expand(const char *srcp, bool tic_format, int numbers)
 {
+#ifdef __VSF__
+#	define buffer		(ncurses_tinfo_comp_expand_ctx->_nc_tic_expand.buffer)
+#	define length		(ncurses_tinfo_comp_expand_ctx->_nc_tic_expand.length)
+#else
     static char *buffer;
     static size_t length;
+#endif
 
     int bufp;
     const char *str = VALID_STRING(srcp) ? srcp : "\0\0";
@@ -225,4 +247,8 @@ _nc_tic_expand(const char *srcp, bool tic_format, int numbers)
     }
     DEBUG_THIS(("... %s", _nc_visbuf(buffer)));
     return (buffer);
+#ifdef __VSF__
+#	undef buffer
+#	undef length
+#endif
 }

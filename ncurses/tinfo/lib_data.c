@@ -45,6 +45,187 @@
 
 MODULE_ID("$Id: lib_data.c,v 1.85 2021/09/04 10:54:35 tom Exp $")
 
+#ifdef __VSF__
+static void __ncurses_tinfo_data_mod_init(void *ctx)
+{
+#define CHARS_0s { '\0' }
+
+#define TGETENT_0 { 0L, FALSE, NULL, NULL, NULL }
+#define TGETENT_0s { TGETENT_0, TGETENT_0, TGETENT_0, TGETENT_0 }
+
+_nc_globals = (NCURSES_GLOBALS) {
+    0,				/* have_sigtstp */
+    0,				/* have_sigwinch */
+    0,				/* cleanup_nested */
+
+    FALSE,			/* init_signals */
+    FALSE,			/* init_screen */
+
+    NULL,			/* comp_sourcename */
+    NULL,			/* comp_termtype */
+
+    FALSE,			/* have_tic_directory */
+    FALSE,			/* keep_tic_directory */
+    0,				/* tic_directory */
+
+    NULL,			/* dbi_list */
+    0,				/* dbi_size */
+
+    NULL,			/* first_name */
+    NULL,			/* keyname_table */
+    0,				/* init_keyname */
+
+    0,				/* slk_format */
+
+    2048,			/* getstr_limit */
+
+    NULL,			/* safeprint_buf */
+    0,				/* safeprint_used */
+
+    TGETENT_0s,			/* tgetent_cache */
+    0,				/* tgetent_index */
+    0,				/* tgetent_sequence */
+
+    0,				/* dbd_blob */
+    0,				/* dbd_list */
+    0,				/* dbd_size */
+    0,				/* dbd_time */
+    { { 0, 0 } },		/* dbd_vars */
+
+#if HAVE_TSEARCH
+    NULL,			/* cached_tparm */
+    0,				/* count_tparm */
+#endif /* HAVE_TSEARCH */
+
+#ifdef USE_TERM_DRIVER
+    0,				/* term_driver */
+#endif
+
+#ifndef USE_SP_WINDOWLIST
+    0,				/* _nc_windowlist */
+#endif
+
+#if USE_HOME_TERMINFO
+    NULL,			/* home_terminfo */
+#endif
+
+#if !USE_SAFE_SPRINTF
+    0,				/* safeprint_cols */
+    0,				/* safeprint_rows */
+#endif
+
+#ifdef USE_PTHREADS
+    PTHREAD_MUTEX_INITIALIZER,	/* mutex_curses */
+    PTHREAD_MUTEX_INITIALIZER,	/* mutex_prescreen */
+    PTHREAD_MUTEX_INITIALIZER,	/* mutex_screen */
+    PTHREAD_MUTEX_INITIALIZER,	/* mutex_update */
+    PTHREAD_MUTEX_INITIALIZER,	/* mutex_tst_tracef */
+    PTHREAD_MUTEX_INITIALIZER,	/* mutex_tracef */
+    0,				/* nested_tracef */
+    0,				/* use_pthreads */
+#if USE_PTHREADS_EINTR
+    0,				/* read_thread */
+#endif
+#endif
+#if USE_WIDEC_SUPPORT
+    CHARS_0s,			/* key_name */
+#endif
+#ifdef TRACE
+    FALSE,			/* trace_opened */
+    CHARS_0s,			/* trace_fname */
+    0,				/* trace_level */
+    NULL,			/* trace_fp */
+    -1,				/* trace_fd */
+
+    NULL,			/* tracearg_buf */
+    0,				/* tracearg_used */
+
+    NULL,			/* tracebuf_ptr */
+    0,				/* tracebuf_used */
+
+    CHARS_0s,			/* tracechr_buf */
+
+    NULL,			/* tracedmp_buf */
+    0,				/* tracedmp_used */
+
+    NULL,			/* tracetry_buf */
+    0,				/* tracetry_used */
+
+    { CHARS_0s, CHARS_0s },	/* traceatr_color_buf */
+    0,				/* traceatr_color_sel */
+    -1,				/* traceatr_color_last */
+#if !defined(USE_PTHREADS) && USE_REENTRANT
+    0,				/* nested_tracef */
+#endif
+#endif /* TRACE */
+#if NO_LEAKS
+    FALSE,			/* leak_checking */
+#endif
+};
+
+#define STACK_FRAME_0	{ { 0 }, 0 }
+#define STACK_FRAME_0s	{ STACK_FRAME_0 }
+#define NUM_VARS_0s	{ 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 }
+
+#define RIPOFF_0	{ 0,0,0 }
+#define RIPOFF_0s	{ RIPOFF_0 }
+
+_nc_prescreen = (NCURSES_PRESCREEN) {
+    NULL,			/* allocated */
+    TRUE,			/* use_env */
+    FALSE,			/* filter_mode */
+    A_NORMAL,			/* previous_attr */
+    {				/* tparm_state */
+	NULL,			/* tparam_base */
+
+	STACK_FRAME_0s,		/* stack */
+	0,			/* stack_ptr */
+
+	NULL,			/* out_buff */
+	0,			/* out_size */
+	0,			/* out_used */
+
+	NULL,			/* fmt_buff */
+	0,			/* fmt_size */
+
+	NUM_VARS_0s,		/* static_vars */
+#ifdef TRACE
+	NULL,			/* tname */
+#endif
+    },
+    NULL,			/* saved_tty */
+    FALSE,			/* use_tioctl */
+    0,				/* _outch */
+#ifndef USE_SP_RIPOFF
+    RIPOFF_0s,			/* ripoff */
+    NULL,			/* rsp */
+#endif
+#if NCURSES_NO_PADDING
+    FALSE,			/* flag to set if padding disabled  */
+#endif
+#if BROKEN_LINKER || USE_REENTRANT
+    NULL,			/* real_acs_map */
+    0,				/* LINES */
+    0,				/* COLS */
+    8,				/* TABSIZE */
+    1000,			/* ESCDELAY */
+    0,				/* cur_term */
+#endif
+#ifdef TRACE
+#if BROKEN_LINKER || USE_REENTRANT
+    0L,				/* _outchars */
+    NULL,			/* _tputs_trace */
+#endif
+#endif
+};
+}
+define_vsf_ncurses_mod(ncurses_tinfo_data,
+    sizeof(struct __ncurses_tinfo_data_ctx),
+    VSF_NCURSES_MOD_TINFO_DATA,
+    __ncurses_tinfo_data_mod_init
+)
+#endif
+
 /*
  * OS/2's native linker complains if we don't initialize public data when
  * constructing a dll (reported by J.J.G.Ripoll).
@@ -66,12 +247,16 @@ NCURSES_PUBLIC_VAR(newscr) (void)
     return CURRENT_SCREEN ? NewScreen(CURRENT_SCREEN) : 0;
 }
 #else
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(WINDOW *) stdscr = 0;
 NCURSES_EXPORT_VAR(WINDOW *) curscr = 0;
 NCURSES_EXPORT_VAR(WINDOW *) newscr = 0;
 #endif
+#endif
 
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(SCREEN *) _nc_screen_chain = 0;
+#endif
 
 /*
  * The variable 'SP' will be defined as a function on systems that cannot link
@@ -107,10 +292,13 @@ _nc_set_screen(SCREEN *sp)
 }
 
 #else
-
+#ifndef __VSF__
 NCURSES_EXPORT_VAR(SCREEN *) SP = NULL; /* Some linkers require initialized data... */
 #endif
+#endif
 /* *INDENT-OFF* */
+
+#ifndef __VSF__
 #define CHARS_0s { '\0' }
 
 #define TGETENT_0 { 0L, FALSE, NULL, NULL, NULL }
@@ -281,6 +469,7 @@ NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen = {
 #endif
 #endif
 };
+#endif
 /* *INDENT-ON* */
 
 /*

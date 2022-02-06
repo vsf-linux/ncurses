@@ -269,7 +269,11 @@ typedef struct {
 #endif
 } NCURSES_GLOBALS;
 
+#ifdef __VSF__
+#	define _nc_globals				(ncurses_ctx->lib_data.___nc_globals)
+#else
 extern NCURSES_EXPORT_VAR(NCURSES_GLOBALS) _nc_globals;
+#endif
 
 #define N_RIPS 5
 
@@ -321,7 +325,11 @@ typedef struct {
 #endif
 } NCURSES_PRESCREEN;
 
+#ifdef __VSF__
+#	define _nc_prescreen			(ncurses_ctx->lib_data.___nc_prescreen)
+#else
 extern NCURSES_EXPORT_VAR(NCURSES_PRESCREEN) _nc_prescreen;
+#endif
 
 #ifdef __cplusplus
 }

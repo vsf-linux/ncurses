@@ -50,6 +50,24 @@
 
 MODULE_ID("$Id: parse_entry.c,v 1.102 2021/09/04 10:54:35 tom Exp $")
 
+#if NCURSES_XNAMES
+#ifdef __VSF__
+struct __ncurses_tinfo_parse_entry_ctx {
+	struct {
+		struct name_table_entry temp;
+	} _nc_extend_names;
+};
+define_vsf_ncurses_mod(ncurses_tinfo_parse_entry,
+	sizeof(struct __ncurses_tinfo_parse_entry_ctx),
+	VSF_NCURSES_MOD_TINFO_PARSE_ENTRY,
+	NULL
+)
+#	define ncurses_tinfo_parse_entry_ctx			\
+		((struct __ncurses_tinfo_parse_entry_ctx *)	\
+			vsf_linux_dynlib_ctx(&vsf_ncurses_mod_name(ncurses_tinfo_parse_entry)))
+#endif
+#endif
+
 #ifdef LINT
 static short const parametrized[] =
 {0};
@@ -66,7 +84,11 @@ static struct name_table_entry const *lookup_fullname(const char *name);
 static struct name_table_entry const *
 _nc_extend_names(ENTRY * entryp, const char *name, int token_type)
 {
+#ifdef __VSF__
+#	define temp					(ncurses_tinfo_parse_entry_ctx->_nc_extend_names.temp)
+#else
     static struct name_table_entry temp;
+#endif
     TERMTYPE2 *tp = &(entryp->tterm);
     unsigned offset = 0;
     unsigned actual;
@@ -178,6 +200,9 @@ _nc_extend_names(ENTRY * entryp, const char *name, int token_type)
     temp.nte_link = -1;
 
     return &temp;
+#ifdef __VSF__
+#	undef temp
+#endif
 }
 
 static const char *
