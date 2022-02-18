@@ -108,7 +108,7 @@ extern int errno;
 
 /* Some Windows related defines */
 #undef _NC_WINDOWS
-#if (defined(_WIN32) || defined(_WIN64))
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__VSF__)
 #define _NC_WINDOWS
 #else
 #undef EXP_WIN32_DRIVER
